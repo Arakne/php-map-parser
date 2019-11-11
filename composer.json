@@ -1,0 +1,34 @@
+{
+    "name": "arakne/php-map-parser",
+    "description": "Parser and renderer for Dofus maps, in PHP",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Vincent Quatrevieux",
+            "email": "quatrevieux.vincent@gmail.com"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/b2pweb/bdf-collections"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/vincent4vx/php-swf"
+        }
+    ],
+    "require": {
+        "php": ">=7.1",
+        "b2pweb/bdf-collections": "dev-master",
+        "vincent4vx/php-swf": "dev-master"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Arakne\\MapParser\\": "src"
+        }
+    }
+}
