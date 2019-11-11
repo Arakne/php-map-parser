@@ -6,7 +6,6 @@ namespace Arakne\MapParser\Parser;
  * Parsed cell data
  *
  * @see https://github.com/Emudofus/Dofus/blob/1.29/ank/battlefield/utils/Compressor.as#L54
- * @todo filter layers
  */
 final class Cell
 {
@@ -46,22 +45,6 @@ final class Cell
     public function movement(): int
     {
         return ($this->data[2] & 56) >> 3;
-    }
-
-    /**
-     * Check if the cell contains an interactive object
-     */
-    public function interactive(): bool
-    {
-        return ($this->data[7] & 2) >> 1 === 1;
-    }
-
-    /**
-     * Get the cell object id
-     */
-    public function objectId(): int
-    {
-        return (($this->data[0] & 2) << 12) + (($this->data[7] & 1) << 12) + ($this->data[8] << 6) + $this->data[9];
     }
 
     /**

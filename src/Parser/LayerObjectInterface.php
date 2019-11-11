@@ -27,4 +27,11 @@ interface LayerObjectInterface
      * @return bool
      */
     public function flip(): bool;
+
+    /**
+     * Check if the layer is active (i.e. has an object)
+     *
+     * @return bool
+     */
+    public function active(): bool;
 }

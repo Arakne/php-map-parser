@@ -49,6 +49,14 @@ final class LayerObject2 implements LayerObjectInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function active(): bool
+    {
+        return $this->number() !== 0;
+    }
+
+    /**
      * Does the object is interactive ?
      *
      * @return bool

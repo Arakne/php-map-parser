@@ -47,4 +47,12 @@ final class LayerObject1 implements LayerObjectInterface
     {
         return ($this->data[7] & 8) >> 3 === 1;
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function active(): bool
+    {
+        return $this->number() !== 0;
+    }
 }

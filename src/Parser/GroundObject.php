@@ -49,6 +49,14 @@ final class GroundObject implements LayerObjectInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function active(): bool
+    {
+        return $this->number() !== 0;
+    }
+
+    /**
      * Get the ground elevation level
      *
      * @return int
