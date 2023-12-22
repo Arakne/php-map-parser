@@ -2,6 +2,10 @@
 
 namespace Arakne\MapParser\Renderer;
 
+use Arakne\MapParser\Loader\SimpleMapLoader;
+use Intervention\Image\Image;
+use Intervention\Image\ImageManager;
+
 /**
  * Class TileRenderer
  */
@@ -122,42 +126,57 @@ class TileRenderer
         return $maps;
     }
 
-    public function render(int $x, int $y)
+    public function render(int $x, int $y): Image
     {
         $cacheFile = $this->tileCacheFile($x, $y);
 
         if (file_exists($cacheFile)) {
-            return imagecreatefrompng($cacheFile);
+            return (new ImageManager())->make($cacheFile);
         }
 
-        $img = imagecreatetruecolor($this->tileWidth, $this->tileHeight);
+        $img = (new ImageManager())->canvas($this->tileWidth, $this->tileHeight);
 
         foreach ($this->toMapCoordinates($x, $y) as $mapCoordinate) {
             if (!$map = $this->renderMap($mapCoordinate)) {
                 continue;
             }
 
-            imagecopy(
-                $img,
-                $map,
-                $mapCoordinate->xDestinationOffset(),
-                $mapCoordinate->yDestinationOffset(),
-                $mapCoordinate->xSourceOffset(),
-                $mapCoordinate->ySourceOffset(),
+            $map = (clone $map)->crop(
                 MapRenderer::DISPLAY_WIDTH,
-                MapRenderer::DISPLAY_HEIGHT
+                MapRenderer::DISPLAY_HEIGHT,
+                $mapCoordinate->xSourceOffset(),
+                $mapCoordinate->ySourceOffset()
             );
-            imagedestroy($map);
+
+            $img->insert(
+                $map,
+                'top-left',
+                $mapCoordinate->xDestinationOffset(),
+                $mapCoordinate->yDestinationOffset()
+            );
+
+
+            //imagecopy(
+            //    $img->getCore(),
+            //    $map->getCore(),
+            //    $mapCoordinate->xDestinationOffset(),
+            //    $mapCoordinate->yDestinationOffset(),
+            //    $mapCoordinate->xSourceOffset(),
+            //    $mapCoordinate->ySourceOffset(),
+            //    MapRenderer::DISPLAY_WIDTH,
+            //    MapRenderer::DISPLAY_HEIGHT
+            //);
+            //imagedestroy($map);
         }
 
         if ($cacheFile) {
-            imagepng($img, $cacheFile);
+            $img->save($cacheFile);
         }
 
         return $img;
     }
 
-    private function renderMap(MapCoordinates $coordinates)
+    private function renderMap(MapCoordinates $coordinates): ?Image
     {
         if (!$map = ($this->mapResolver)($coordinates)) {
             return null;
@@ -166,13 +185,16 @@ class TileRenderer
         $cacheFile = $this->mapCacheFile($map['id']);
 
         if ($cacheFile && file_exists($cacheFile)) {
-            return imagecreatefrompng($cacheFile);
+            return (new ImageManager())->make($cacheFile);
         }
 
-        $img = $this->renderer->render($map['mapData'], $map['width'], $map['height']);
+        $mapLoader = new SimpleMapLoader();
+        $map = $mapLoader->load($map['id'], $map['width'], $map['height'], $map['mapData']);
+
+        $img = $this->renderer->render($map);
 
         if ($cacheFile) {
-            imagepng($img, $cacheFile);
+            $img->save($cacheFile);
         }
 
         return $img;

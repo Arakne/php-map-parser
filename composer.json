@@ -20,7 +20,7 @@
     ],
     "require": {
         "php": ">=7.1",
-        "b2pweb/bdf-collections": "dev-master",
+        "b2pweb/bdf-collections": "~1.1",
         "vincent4vx/php-swf": "dev-master",
         "intervention/image": "^2.5",
         "psr/cache": "^1.0",

@@ -14,7 +14,7 @@
             integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og=="
             crossorigin=""></script>
     <script lang="js">
-        var mymap = L.map('mapid').setView([0, 0], 0);
+        var mymap = L.map('mapid').setView([0, 0], 1);
         //
         // L.TileLayer.Custom = L.TileLayer.extend({
         //     getTileUrl: function(coords) {
@@ -36,8 +36,8 @@
         //     }
         // });
 
-        L.tileLayer('http://127.0.0.1/php-map-parser/tile3.php?x={x}&y={y}&z={z}', {
-            maxZoom: 5,
+        L.tileLayer('http://127.0.0.1/php-map-parser/amakna.php?x={x}&y={y}&z={z}', {
+            maxZoom: 9, // 5 for incarnam
         }).addTo(mymap);
     </script>
     </body>

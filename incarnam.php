@@ -13,14 +13,14 @@ $pdo = new PDO('mysql:host=127.0.0.1;dbname=araknemu', 'araknemu');
 $areas = $pdo->query('select SUBAREA_ID FROM SUBAREA WHERE AREA_ID = 45')->fetchAll();
 $areas = array_map(function ($a) { return $a['SUBAREA_ID']; }, $areas);
 
-$cacheDir = __DIR__.'/cache/maps';
-$dofusClipsDir = __DIR__.'/../../../../.local/app/Dofus/clips';
+$cacheDir = __DIR__.'/cache/incarnam';
+$dofusClipsDir = __DIR__.'/gfx';
 
-$swfLoader = new SwfLoader(new Jar(__DIR__.'/../../../../.local/app/ffdec_15.1.0/ffdec.jar'));
+$swfLoader = new SwfLoader(new Jar(__DIR__.'/ffdec_15.1.1/ffdec.jar'));
 
 $mapRenderer = new MapRenderer(
-    $swfLoader->bulk(glob($dofusClipsDir.'/gfx/g*.swf')),
-    $swfLoader->bulk(glob($dofusClipsDir.'/gfx/o*.swf'))
+    $swfLoader->bulk(glob($dofusClipsDir.'/g*.swf'))->setResultDirectory($cacheDir.'/grounds'),
+    $swfLoader->bulk(glob($dofusClipsDir.'/o*.swf'))->setResultDirectory($cacheDir.'/objects')
 );
 
 if (!is_dir($cacheDir)) {

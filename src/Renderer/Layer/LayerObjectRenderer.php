@@ -83,7 +83,7 @@ final class LayerObjectRenderer implements LayerRendererInterface
         $sprite = $this->loader->get($object->number());
 
         // @todo exception ?
-        if (!$sprite->bounds() || $sprite->bounds()->width() == 0) {
+        if (!$sprite || !$sprite->bounds() || $sprite->bounds()->width() == 0) {
             //throw new \RuntimeException('Invalid bounds '.$sprite->frame());
             return;
         }

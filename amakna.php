@@ -10,17 +10,17 @@ require_once __DIR__.'/vendor/autoload.php';
 
 $pdo = new PDO('mysql:host=127.0.0.1;dbname=araknemu', 'araknemu');
 
-$areas = $pdo->query('select SUBAREA_ID FROM SUBAREA WHERE AREA_ID = 45')->fetchAll();
+$areas = $pdo->query('select SUBAREA_ID FROM SUBAREA WHERE AREA_ID IN (SELECT AREA_ID FROM AREA WHERE SUPERAREA_ID = 0)')->fetchAll();
 $areas = array_map(function ($a) { return $a['SUBAREA_ID']; }, $areas);
 
-$cacheDir = __DIR__.'/cache/maps';
-$dofusClipsDir = __DIR__.'/../../../../.local/app/Dofus/clips';
+$cacheDir = __DIR__.'/cache/amakna';
+$dofusClipsDir = __DIR__.'/gfx';
 
-$swfLoader = new SwfLoader(new Jar(__DIR__.'/../../../../.local/app/ffdec_15.1.0/ffdec.jar'));
+$swfLoader = new SwfLoader(new Jar(__DIR__.'/ffdec_15.1.1/ffdec.jar'));
 
 $mapRenderer = new MapRenderer(
-    $swfLoader->bulk(glob($dofusClipsDir.'/gfx/g*.swf')),
-    $swfLoader->bulk(glob($dofusClipsDir.'/gfx/o*.swf'))
+    $swfLoader->bulk(glob($dofusClipsDir.'/g*.swf')),
+    $swfLoader->bulk(glob($dofusClipsDir.'/o*.swf'))
 );
 
 if (!is_dir($cacheDir)) {
@@ -132,6 +132,9 @@ $size = max($realWidth, $realHeight);
 
 // @todo 2^n
 $tileCount = ceil($size / TILE_SIZE);
+
+// $tileCount should be 2^n, so get the closest 2^n
+$tileCount = pow(2, ceil(log($tileCount, 2)));
 $tileCount /= pow(2, $zoom);
 
 $startX = $x * $tileCount;
@@ -139,6 +142,18 @@ $startY = $y * $tileCount;
 
 $img = imagecreatetruecolor(TILE_SIZE, TILE_SIZE);
 $subtileSize = TILE_SIZE / $tileCount;
+
+// @todo disallow out of bounds
+if (
+    $x >= 2 ** $zoom
+    || $y >= 2 ** $zoom
+    || ($zoom == 1 && $y > 0) // @todo ne devrait pas être là
+) {
+    header('Content-Type: image/png');
+    imagepng($img);
+    imagedestroy($img);
+    exit;
+}
 
 for ($x = 0; $x <= $tileCount; ++$x) {
     for ($y = 0; $y <= $tileCount; ++$y) {
