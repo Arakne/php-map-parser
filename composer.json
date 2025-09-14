@@ -2,6 +2,7 @@
     "name": "arakne/php-map-parser",
     "description": "Parser and renderer for Dofus maps, in PHP",
     "type": "library",
+    "license": "LGPL-3.0-or-later",
     "authors": [
         {
             "name": "Vincent Quatrevieux",
