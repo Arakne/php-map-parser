@@ -3,11 +3,13 @@
 namespace Util;
 
 use Arakne\MapParser\Util\Checksum;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 class ChecksumTest extends TestCase
 {
-    public function test_integer()
+    #[Test]
+    public function integer()
     {
         $this->assertSame(13, Checksum::integer("Hello World !"));
         $this->assertSame(11, Checksum::integer("Hello World ?"));

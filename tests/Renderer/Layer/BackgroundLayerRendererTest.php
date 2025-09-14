@@ -7,6 +7,7 @@ use Arakne\MapParser\Renderer\Layer\BackgroundLayerRenderer;
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function glob;
@@ -17,7 +18,8 @@ class BackgroundLayerRendererTest extends TestCase
 {
     use AssertImageTrait;
 
-    public function test_render()
+     #[Test]
+    public function render()
     {
         $renderer = new BackgroundLayerRenderer(new SwfSpriteRepository(glob(__DIR__.'/../../_files/clips/gfx/g*.swf')));
         $map = new Map(0, 15, 17, 438, []);
@@ -31,7 +33,8 @@ class BackgroundLayerRendererTest extends TestCase
         unlink($path);
     }
 
-    public function test_render_no_background()
+    #[Test]
+    public function render_no_background()
     {
         $renderer = new BackgroundLayerRenderer(new SwfSpriteRepository(glob(__DIR__.'/../../_files/clips/gfx/g*.swf')));
         $map = new Map(0, 15, 17, 0, []);
@@ -45,7 +48,8 @@ class BackgroundLayerRendererTest extends TestCase
         unlink($path);
     }
 
-    public function test_render_invalid_background()
+    #[Test]
+    public function render_invalid_background()
     {
         $renderer = new BackgroundLayerRenderer(new SwfSpriteRepository(glob(__DIR__.'/../../_files/clips/gfx/g*.swf')));
         $map = new Map(0, 15, 17, 404, []);

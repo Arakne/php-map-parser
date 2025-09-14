@@ -4,13 +4,16 @@ namespace Util;
 
 use Arakne\MapParser\Util\XorCipher;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
 use function file_get_contents;
 
 class XorCipherTest extends TestCase
 {
-    public function test_decrypt()
+    #[Test]
+    public function decrypt()
     {
         $cipher = new XorCipher('my key');
 
@@ -22,18 +25,20 @@ class XorCipherTest extends TestCase
         $this->assertNotEquals('Hello World !', new XorCipher('other key')->decrypt('251C4C070A593A16520701594C', 0));
     }
 
-    public function test_decrypt_long_data()
+    #[Test]
+    public function decrypt_long_data()
     {
         $cipher = XorCipher::fromHexKey(file_get_contents(__DIR__.'/../_files/10302.key'));
 
         $this->assertSame(file_get_contents(__DIR__.'/../_files/10302.data.decoded'), $cipher->decrypt(file_get_contents(__DIR__.'/../_files/10302.data')));
     }
 
-    /**
-     * @testWith ["invalid"]
-     *           ["####"]
-     */
-    public function test_decrypt_invalid_values(string $value)
+    #[
+        Test,
+        TestWith(['invalid']),
+        TestWith(['####'])
+    ]
+    public function decrypt_invalid_values(string $value)
     {
         $this->expectException(InvalidArgumentException::class);
 

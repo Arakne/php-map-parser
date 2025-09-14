@@ -2,6 +2,7 @@
 
 namespace Arakne\MapParser\Parser;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -19,21 +20,17 @@ class CellDataParserTest extends TestCase
         $this->parser = new CellDataParser();
     }
 
-    /**
-     *
-     */
-    public function test_parse_map()
+    #[Test]
+    public function parse_map()
     {
         $cells = $this->parser->parse(file_get_contents(__DIR__.'/../_files/10340.data'));
 
         $this->assertCount(479, $cells);
-        $this->assertContainsOnly(Cell::class, $cells);
+        $this->assertContainsOnlyInstancesOf(Cell::class, $cells);
     }
 
-    /**
-     *
-     */
-    public function test_parse_empty_cell()
+    #[Test]
+    public function parse_empty_cell()
     {
         $cell = $this->parser->parse("Hhaaeaaaaa")[0];
 
@@ -43,10 +40,8 @@ class CellDataParserTest extends TestCase
         $this->assertFalse($cell->layer2->active);
     }
 
-    /**
-     *
-     */
-    public function test_parse_not_empty_cell()
+    #[Test]
+    public function parse_not_empty_cell()
     {
         $cell = $this->parser->parse("GhhceaaaWt")[0];
 

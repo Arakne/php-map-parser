@@ -10,12 +10,17 @@ use Arakne\MapParser\Renderer\Tile\TileRenderer;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
 use Arakne\Swf\SwfFile;
+use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_keys;
 use function array_map;
+use function explode;
 use function file_get_contents;
 use function glob;
 use function imagepng;
+use function max;
 use function min;
 use function unlink;
 
@@ -30,7 +35,8 @@ class TileRendererTest extends TestCase
         '4,5' => 10333,
     ];
 
-    public function test_toMapCoordinates()
+    #[Test]
+    public function toMapCoordinates()
     {
         $renderer = new TileRenderer(
             $this->createMock(MapRendererInterface::class),
@@ -178,7 +184,8 @@ class TileRendererTest extends TestCase
         ], $renderer->toMapCoordinates(2, 1));
     }
 
-    public function test_renderOriginalSize_functional()
+    #[Test]
+    public function renderOriginalSize_functional()
     {
         $renderer = new TileRenderer(
             new MapRenderer(
@@ -211,7 +218,8 @@ class TileRendererTest extends TestCase
         }
     }
 
-    public function test_render_max_zoom_functional()
+    #[Test]
+    public function render_max_zoom_functional()
     {
         $renderer = new TileRenderer(
             new MapRenderer(
@@ -246,7 +254,8 @@ class TileRendererTest extends TestCase
         }
     }
 
-    public function test_render_with_zoom()
+    #[Test]
+    public function render_with_zoom()
     {
         $renderer = new TileRenderer(
             new MapRenderer(
@@ -275,5 +284,34 @@ class TileRendererTest extends TestCase
             $this->assertImages(__DIR__ . '/_files/zoom_' . $zoom . '.png', $path);
             unlink($path);
         }
+    }
+
+    #[Test]
+    public function render_invalid_zoom()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $renderer = new TileRenderer(
+            new MapRenderer(
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+            ),
+            function (MapCoordinates $coords) {
+                if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
+                    return null;
+                }
+
+                return MapStructure::fromSwfFile(
+                    new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
+                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                );
+            },
+            min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+            max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+            min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+        );
+
+        $renderer->render(0, 0, 50);
     }
 }

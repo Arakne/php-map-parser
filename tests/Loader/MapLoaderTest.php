@@ -4,6 +4,7 @@ namespace Arakne\MapParser\Loader;
 
 use Arakne\MapParser\Parser\Cell;
 use Arakne\Swf\SwfFile;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function file_get_contents;
@@ -20,10 +21,8 @@ class MapLoaderTest extends TestCase
         $this->loader = new MapLoader();
     }
 
-    /**
-     *
-     */
-    public function test_load()
+    #[Test]
+    public function load()
     {
         $map = $this->loader->load(new MapStructure(10340, 15, 17, file_get_contents(__DIR__.'/../_files/10340.data')));
 
@@ -31,12 +30,10 @@ class MapLoaderTest extends TestCase
         $this->assertEquals(15, $map->width);
         $this->assertEquals(17, $map->height);
         $this->assertCount(479, $map->cells);
-        $this->assertContainsOnly(Cell::class, $map->cells);
+        $this->assertContainsOnlyInstancesOf(Cell::class, $map->cells);
     }
 
-    /**
-     *
-     */
+    #[Test]
     public function test_load_encrypted()
     {
         $map = $this->loader->load(
@@ -50,6 +47,6 @@ class MapLoaderTest extends TestCase
         $this->assertEquals(15, $map->width);
         $this->assertEquals(17, $map->height);
         $this->assertCount(479, $map->cells);
-        $this->assertContainsOnly(Cell::class, $map->cells);
+        $this->assertContainsOnlyInstancesOf(Cell::class, $map->cells);
     }
 }

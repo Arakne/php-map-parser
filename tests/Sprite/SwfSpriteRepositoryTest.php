@@ -6,6 +6,7 @@ use Arakne\MapParser\Sprite\Sprite;
 use Arakne\MapParser\Sprite\SpriteState;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function file_put_contents;
@@ -23,7 +24,8 @@ class SwfSpriteRepositoryTest extends TestCase
         $this->repository = new SwfSpriteRepository(glob(__DIR__ . '/../_files/clips/gfx/o*.swf'));
     }
 
-    public function test_get_success()
+    #[Test]
+    public function get_success()
     {
         $sprite = $this->repository->get(7019);
 
@@ -43,7 +45,8 @@ class SwfSpriteRepositoryTest extends TestCase
         unlink(__DIR__ . '/Fixtures/sprite.png');
     }
 
-    public function test_get_not_found()
+    #[Test]
+    public function get_not_found()
     {
         $sprite = $this->repository->get(555555);
 
@@ -57,7 +60,8 @@ class SwfSpriteRepositoryTest extends TestCase
         $this->assertSame(Sprite::EMPTY_PNG, $sprite->pngData);
     }
 
-    public function test_get_empty()
+    #[Test]
+    public function get_empty()
     {
         $sprite = $this->repository->get(3669);
 

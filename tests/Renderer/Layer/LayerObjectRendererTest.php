@@ -10,6 +10,7 @@ use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Sprite\SpriteRepositoryInterface;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function imagecreatetruecolor;
@@ -53,10 +54,8 @@ class LayerObjectRendererTest extends TestCase
         $this->cells = CellShape::fromMap($this->map);
     }
 
-    /**
-     *
-     */
-    public function test_render()
+    #[Test]
+    public function render()
     {
         $img = imagecreatetruecolor(MapRenderer::DISPLAY_WIDTH, MapRenderer::DISPLAY_HEIGHT);
 

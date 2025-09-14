@@ -13,13 +13,11 @@
         "php": "~8.4",
         "ext-imagick": "*",
         "ext-gd": "*",
-        "intervention/image": "^3.11",
         "arakne/swf": "^0.2.2",
-        "psr/cache": "~1.0|~2.0|~3.0",
         "walkor/workerman": "~5.1"
     },
     "require-dev": {
-        "phpunit/phpunit": "~9.5"
+        "phpunit/phpunit": "~12.0"
     },
     "autoload": {
         "psr-4": {

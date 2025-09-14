@@ -8,6 +8,7 @@ use Arakne\MapParser\Parser\CellDataParser;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
 use Arakne\MapParser\Util\XorCipher;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function file_get_contents;
@@ -34,10 +35,8 @@ class MapRenderTest extends TestCase
         );
     }
 
-    /**
-     *
-     */
-    public function test_render()
+    #[Test]
+    public function render()
     {
         $map = new Map(0, 15, 17, 0, (new CellDataParser())->parse(file_get_contents(__DIR__.'/../_files/10340.data')));
         $img = $this->renderer->render($map);
@@ -51,10 +50,8 @@ class MapRenderTest extends TestCase
         unlink(__DIR__.'/_files/render.png');
     }
 
-    /**
-     *
-     */
-    public function test_render_with_background()
+    #[Test]
+    public function render_with_background()
     {
         $map = new Map(0, 15, 17, 438, (new CellDataParser())->parse(
             XorCipher::fromHexKey(file_get_contents(__DIR__.'/../_files/10302.key'))->decrypt(file_get_contents(__DIR__.'/../_files/10302.data'))
