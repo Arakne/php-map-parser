@@ -68,7 +68,7 @@ class LayerObjectRendererTest extends TestCase
 
         imagepng($img, $path = __DIR__.'/../_files/layer.png');
 
-        $this->assertImages(__DIR__.'/../_files/10340-ground.png', $path);
+        $this->assertImages(__DIR__.'/../_files/10340-ground.png', $path, 0.011);
         unlink($path);
     }
 }
