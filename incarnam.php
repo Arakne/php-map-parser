@@ -4,9 +4,9 @@ set_time_limit(-1);
 
 use Arakne\MapParser\Loader\MapLoader;
 use Arakne\MapParser\Loader\MapStructure;
-use Arakne\MapParser\Renderer\MapCoordinates;
 use Arakne\MapParser\Renderer\MapRenderer;
-use Arakne\MapParser\Renderer\TileRenderer;
+use Arakne\MapParser\Renderer\Tile\MapCoordinates;
+use Arakne\MapParser\Renderer\Tile\TileRenderer;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\Swf\SwfFile;
 use Workerman\Connection\TcpConnection;
@@ -105,7 +105,7 @@ $tileRenderer = new TileRenderer(
         $pos = [];
 
         foreach ($areas as $area) {
-            $pos[] = '"'.$coordinates->x().','.$coordinates->y().','.$area.'"';
+            $pos[] = '"'.$coordinates->x.','.$coordinates->y.','.$area.'"';
         }
 
         $map = $pdo->query('SELECT * FROM maps WHERE mappos IN ('.implode(',', $pos).')')->fetch();
@@ -124,7 +124,6 @@ $tileRenderer = new TileRenderer(
     },
     $Xmin,
     $Ymin,
-    null,
 );
 
 $worker = new \Workerman\Worker('http://0.0.0.0:5000');

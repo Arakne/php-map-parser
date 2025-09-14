@@ -16,7 +16,7 @@ use function imagecreatetruecolor;
  *
  * @todo interface
  */
-final readonly class MapRenderer
+final readonly class MapRenderer implements MapRendererInterface
 {
     const int DISPLAY_WIDTH = 742;
     const int DISPLAY_HEIGHT = 432;

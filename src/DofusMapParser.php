@@ -2,7 +2,7 @@
 
 namespace Arakne\MapParser;
 
-use Arakne\MapParser\Renderer\MapRenderer;
+use Arakne\MapParser\Renderer\Tile\MapRenderer;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr6NullCache\Adapter\NullCacheItemPool;
 use Swf\Processor\BulkLoader;

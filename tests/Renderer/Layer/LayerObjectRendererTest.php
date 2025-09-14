@@ -10,11 +10,7 @@ use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Sprite\SpriteRepositoryInterface;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
-use Intervention\Image\ImageManager;
 use PHPUnit\Framework\TestCase;
-use Swf\Cli\Jar;
-use Swf\Processor\BulkLoader;
-use Swf\SwfLoader;
 
 use function imagecreatetruecolor;
 use function imagepng;
