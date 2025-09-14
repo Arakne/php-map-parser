@@ -123,7 +123,9 @@ $tileRenderer = new TileRenderer(
         return MapStructure::fromSwfFile(new SwfFile($mapFile), $map['key']);
     },
     $Xmin,
+    $Xmax,
     $Ymin,
+    $Ymax,
 );
 
 $worker = new \Workerman\Worker('http://0.0.0.0:5000');
@@ -153,30 +155,32 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
         )
     );*/
 
-    $realWidth = ($Xmax - $Xmin + 1) * MapRenderer::DISPLAY_WIDTH;
-    $realHeight = ($Ymax - $Ymin + 1) * MapRenderer::DISPLAY_HEIGHT;
+    //$realWidth = ($Xmax - $Xmin + 1) * MapRenderer::DISPLAY_WIDTH;
+    //$realHeight = ($Ymax - $Ymin + 1) * MapRenderer::DISPLAY_HEIGHT;
+    //
+    //$size = max($realWidth, $realHeight);
+    //$size = pow(2, ceil(log($size, 2)));
+    //
+    //// @todo 2^n
+    //$tileCount = ceil($size / TileRenderer::TILE_SIZE);
+    //$tileCount /= pow(2, $zoom);
+    //$tileCount = (int) $tileCount;
+    //
+    //$startX = (int) ($x * $tileCount);
+    //$startY = (int) ($y * $tileCount);
+    //
+    //$img = imagecreatetruecolor(TileRenderer::TILE_SIZE, TileRenderer::TILE_SIZE);
+    //$subtileSize = TileRenderer::TILE_SIZE / $tileCount;
+    //
+    //for ($x = 0; $x <= $tileCount; ++$x) {
+    //    for ($y = 0; $y <= $tileCount; ++$y) {
+    //        $gd = $tileRenderer->render($startX + $x, $startY + $y);
+    //
+    //        imagecopyresampled($img, $gd, $x * $subtileSize, $y * $subtileSize, 0, 0, $subtileSize, $subtileSize, TileRenderer::TILE_SIZE, TileRenderer::TILE_SIZE);
+    //    }
+    //}
 
-    $size = max($realWidth, $realHeight);
-    $size = pow(2, ceil(log($size, 2)));
-
-    // @todo 2^n
-    $tileCount = ceil($size / TileRenderer::TILE_SIZE);
-    $tileCount /= pow(2, $zoom);
-    $tileCount = (int) $tileCount;
-
-    $startX = (int) ($x * $tileCount);
-    $startY = (int) ($y * $tileCount);
-
-    $img = imagecreatetruecolor(TileRenderer::TILE_SIZE, TileRenderer::TILE_SIZE);
-    $subtileSize = TileRenderer::TILE_SIZE / $tileCount;
-
-    for ($x = 0; $x <= $tileCount; ++$x) {
-        for ($y = 0; $y <= $tileCount; ++$y) {
-            $gd = $tileRenderer->render($startX + $x, $startY + $y);
-
-            imagecopyresampled($img, $gd, $x * $subtileSize, $y * $subtileSize, 0, 0, $subtileSize, $subtileSize, TileRenderer::TILE_SIZE, TileRenderer::TILE_SIZE);
-        }
-    }
+    $img = $tileRenderer->render($x, $y, $zoom);
 
     ob_start();
     imagepng($img);

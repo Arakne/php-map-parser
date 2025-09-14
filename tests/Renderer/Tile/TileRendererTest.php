@@ -36,7 +36,9 @@ class TileRendererTest extends TestCase
             $this->createMock(MapRendererInterface::class),
             fn ($coords) => null,
             Xmin: -10,
+            Xmax: 0,
             Ymin: 5,
+            Ymax: 10,
         );
 
         $this->assertEquals([
@@ -176,7 +178,7 @@ class TileRendererTest extends TestCase
         ], $renderer->toMapCoordinates(2, 1));
     }
 
-    public function test_render_functional()
+    public function test_renderOriginalSize_functional()
     {
         $renderer = new TileRenderer(
             new MapRenderer(
@@ -194,16 +196,84 @@ class TileRendererTest extends TestCase
                 );
             },
             min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+            max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
             min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
         );
 
         for ($x = 0; $x < 6; $x++) {
             for ($y = 0; $y < 4; $y++) {
-                $img = $renderer->render($x, $y);
+                $img = $renderer->renderOriginalSize($x, $y);
                 imagepng($img, $path = __DIR__ . '/_files/actual_' . $x . '_' . $y . '.png');
                 $this->assertImages(__DIR__ . '/_files/' . $x . '_' . $y . '.png', $path);
                 unlink($path);
             }
+        }
+    }
+
+    public function test_render_max_zoom_functional()
+    {
+        $renderer = new TileRenderer(
+            new MapRenderer(
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+            ),
+            function (MapCoordinates $coords) {
+                if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
+                    return null;
+                }
+
+                return MapStructure::fromSwfFile(
+                    new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
+                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                );
+            },
+            min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+            max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+            min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+        );
+
+        $this->assertSame(3, $renderer->maxZoom);
+
+        for ($x = 0; $x < 6; $x++) {
+            for ($y = 0; $y < 4; $y++) {
+                $img = $renderer->render($x, $y, $renderer->maxZoom);
+                imagepng($img, $path = __DIR__ . '/_files/actual_' . $x . '_' . $y . '.png');
+                $this->assertImages(__DIR__ . '/_files/' . $x . '_' . $y . '.png', $path);
+                unlink($path);
+            }
+        }
+    }
+
+    public function test_render_with_zoom()
+    {
+        $renderer = new TileRenderer(
+            new MapRenderer(
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+            ),
+            function (MapCoordinates $coords) {
+                if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
+                    return null;
+                }
+
+                return MapStructure::fromSwfFile(
+                    new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
+                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                );
+            },
+            min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+            max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+            min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+        );
+
+        for ($zoom = 0; $zoom <= $renderer->maxZoom; $zoom++) {
+            $img = $renderer->render(0, 0, $zoom);
+            imagepng($img, $path = __DIR__ . '/_files/actual_' . $zoom . '.png');
+            $this->assertImages(__DIR__ . '/_files/zoom_' . $zoom . '.png', $path);
+            unlink($path);
         }
     }
 }

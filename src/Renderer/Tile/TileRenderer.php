@@ -9,8 +9,14 @@ use Arakne\MapParser\Renderer\MapRendererInterface;
 use Closure;
 use GdImage;
 
+use InvalidArgumentException;
+
+use function ceil;
 use function imagecopy;
+use function imagecopyresampled;
 use function imagecreatetruecolor;
+use function log;
+use function max;
 
 /**
  * Class TileRenderer
@@ -18,6 +24,22 @@ use function imagecreatetruecolor;
 final class TileRenderer
 {
     public const int TILE_SIZE = 256;
+
+    /**
+     * The size of a size of the complete map in tiles count
+     * This value will be rounded to the next power of 2
+     *
+     * @var positive-int
+     */
+    private readonly int $size;
+
+    /**
+     * The maximum zoom level
+     * This value is log2($size)
+     *
+     * @var positive-int
+     */
+    public readonly int $maxZoom;
 
     public function __construct(
         private readonly MapRendererInterface $renderer,
@@ -35,41 +57,61 @@ final class TileRenderer
         private readonly int $Xmin,
 
         /**
+         * The maximal X coordinate of the map set
+         */
+        private readonly int $Xmax,
+
+        /**
          * The minimal Y coordinate of the map set
          */
         private readonly int $Ymin,
 
         /**
-         * @var positive-int
+         * The maximal Y coordinate of the map set
          */
-        private readonly int $tileWidth = self::TILE_SIZE,
+        private readonly int $Ymax,
 
         /**
+         * The tile size in pixels (default: 256)
+         * This value should be a power of 2, so it can be evenly divided at each zoom level
+         *
+         * This value is used for both width and height
+         *
          * @var positive-int
          */
-        private readonly int $tileHeight = self::TILE_SIZE,
-    ) {}
+        private readonly int $tileSize = self::TILE_SIZE,
+    ) {
+        $this->size = self::computeSize($Xmin, $Xmax, $Ymin, $Ymax, $tileSize);
+        $this->maxZoom = (int) log($this->size, 2);
+    }
 
     /**
      * Convert tile coordinates to map coordinates
      * Because tiles can overlap multiple maps, this function can return multiple map coordinates
      *
+     * @param non-negative-int $x
+     * @param non-negative-int $y
+     *
      * @return MapCoordinates[]
      */
     public function toMapCoordinates(int $x, int $y): array
     {
-        $mapX = (int) ($x * $this->tileWidth / MapRenderer::DISPLAY_WIDTH);
-        $mapY = (int) ($y * $this->tileHeight / MapRenderer::DISPLAY_HEIGHT);
+        $mapX = (int) ($x * $this->tileSize / MapRenderer::DISPLAY_WIDTH);
+        $mapY = (int) ($y * $this->tileSize / MapRenderer::DISPLAY_HEIGHT);
 
-        $Xoffset = ($x * $this->tileWidth) - ($mapX * MapRenderer::DISPLAY_WIDTH);
-        $Yoffset = ($y * $this->tileHeight) - ($mapY * MapRenderer::DISPLAY_HEIGHT);
+        if ($mapX + $this->Xmin > $this->Xmax || $mapY + $this->Ymin > $this->Ymax) {
+            return [];
+        }
+
+        $Xoffset = ($x * $this->tileSize) - ($mapX * MapRenderer::DISPLAY_WIDTH);
+        $Yoffset = ($y * $this->tileSize) - ($mapY * MapRenderer::DISPLAY_HEIGHT);
 
         $map = new MapCoordinates($mapX + $this->Xmin, $mapY + $this->Ymin, $Xoffset, $Yoffset);
 
         $maps = [$map];
 
-        $hasX = ($x + 1) * $this->tileHeight > ($mapX + 1) * MapRenderer::DISPLAY_WIDTH;
-        $hasY = ($y + 1) * $this->tileWidth > ($mapY + 1) * MapRenderer::DISPLAY_HEIGHT;
+        $hasX = ($x + 1) * $this->tileSize > ($mapX + 1) * MapRenderer::DISPLAY_WIDTH && $mapX + $this->Xmin < $this->Xmax;
+        $hasY = ($y + 1) * $this->tileSize > ($mapY + 1) * MapRenderer::DISPLAY_HEIGHT && $mapY + $this->Ymin < $this->Ymax;
 
         if ($hasX) {
             $maps[] = new MapCoordinates($mapX + $this->Xmin + 1, $mapY + $this->Ymin, 0, $Yoffset, MapRenderer::DISPLAY_WIDTH - $Xoffset, 0);
@@ -90,14 +132,53 @@ final class TileRenderer
      * Render a single tile at the given [X,Y] coordinates
      * Coordinates are in tile space, not map space
      *
+     * @param non-negative-int $x The tile X coordinate
+     * @param non-negative-int $y The tile Y coordinate
+     * @param non-negative-int $zoom The zoom level (0 = normal, 1 = 4x zoom, 2 = 16x zoom, etc.)
+     *
+     * @return GdImage
+     */
+    public function render(int $x, int $y, int $zoom = 0): GdImage
+    {
+        if ($zoom > $this->maxZoom) {
+            throw new InvalidArgumentException("Zoom level {$zoom} is too high, max zoom is {$this->maxZoom}");
+        }
+
+        if ($zoom === $this->maxZoom) {
+            return $this->renderOriginalSize($x, $y);
+        }
+
+        $tileCount = $this->size >> $zoom;
+
+        $startX = (int) ($x * $tileCount);
+        $startY = (int) ($y * $tileCount);
+
+        $img = imagecreatetruecolor($this->tileSize, $this->tileSize);
+        $subtileSize = $this->tileSize / $tileCount;
+
+        for ($x = 0; $x < $tileCount; ++$x) {
+            for ($y = 0; $y < $tileCount; ++$y) {
+                $gd = $this->renderOriginalSize($startX + $x, $startY + $y);
+
+                imagecopyresampled($img, $gd, $x * $subtileSize, $y * $subtileSize, 0, 0, $subtileSize, $subtileSize, $this->tileSize, $this->tileSize);
+            }
+        }
+
+        return $img;
+    }
+
+    /**
+     * Render a single tile at the given [X,Y] coordinates with the maximum detail (i.e. max zoom)
+     * Coordinates are in tile space, not map space
+     *
      * @param int $x
      * @param int $y
      *
      * @return GdImage
      */
-    public function render(int $x, int $y): GdImage
+    public function renderOriginalSize(int $x, int $y): GdImage
     {
-        $img = imagecreatetruecolor($this->tileWidth, $this->tileHeight);
+        $img = imagecreatetruecolor($this->tileSize, $this->tileSize);
 
         foreach ($this->toMapCoordinates($x, $y) as $mapCoordinate) {
             if (!$map = $this->renderMap($mapCoordinate)) {
@@ -129,5 +210,16 @@ final class TileRenderer
         $map = $mapLoader->load($map);
 
         return $this->renderer->render($map);
+    }
+
+    private static function computeSize(int $xMin, int $xMax, int $yMin, int $yMax, int $tileSize): int
+    {
+        $realWidth = ($xMax - $xMin + 1) * MapRenderer::DISPLAY_WIDTH;
+        $realHeight = ($yMax - $yMin + 1) * MapRenderer::DISPLAY_HEIGHT;
+
+        $size = max($realWidth, $realHeight);
+        $tileCount = $size / $tileSize;
+
+        return 2 ** ceil(log($tileCount, 2));
     }
 }
