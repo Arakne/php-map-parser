@@ -9,6 +9,8 @@ use Arakne\MapParser\Sprite\SpriteRepositoryInterface;
 use Closure;
 use GdImage;
 
+use Override;
+
 use function imagecopy;
 
 /**
@@ -27,9 +29,7 @@ final readonly class LayerObjectRenderer implements LayerRendererInterface
         private Closure $getter,
     ) {}
 
-    /**
-     * {@inheritdoc}
-     */
+    #[Override]
     public function render(Map $map, array $cells, GdImage $out): void
     {
         foreach ($cells as $cell) {

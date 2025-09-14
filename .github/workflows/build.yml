@@ -31,11 +31,36 @@ jobs:
                   sudo apt-get update
                   sudo apt-get install -y librsvg2-bin
 
+            - name: Install dependencies
+              run: composer install --prefer-dist --no-progress
+
+            - name: Run test suite
+              run: vendor/bin/phpunit
+
+    analysis:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                php-versions: ['8.4']
+        name: PHP ${{ matrix.php-versions }}
+
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Install PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ matrix.php-versions }}
+                  extensions: json
+                  ini-values: date.timezone=Europe/Paris
+            - name: Check PHP Version
+              run: php -v
+
             - name: Validate composer.json and composer.lock
               run: composer validate --strict
 
             - name: Install dependencies
               run: composer install --prefer-dist --no-progress
 
-            - name: Run test suite
-              run: vendor/bin/phpunit
+            - name: Run static analysis
+              run: vendor/bin/phpstan

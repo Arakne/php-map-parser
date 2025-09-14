@@ -12,6 +12,8 @@ use function is_numeric;
 
 /**
  * Base implementation of {@see SpriteRepositoryInterface} with direct SWF file usage.
+ *
+ * @psalm-api
  */
 final class SwfSpriteRepository implements SpriteRepositoryInterface
 {
@@ -68,7 +70,10 @@ final class SwfSpriteRepository implements SpriteRepositoryInterface
             $bounds = $sprite->bounds();
             $converter = new Converter();
 
-            if ($bounds->width() < 20 || $bounds->height() < 20) {
+            $width = (int) ($bounds->width() / 20);
+            $height = (int) ($bounds->height() / 20);
+
+            if ($width < 1 || $height < 1) {
                 // Less than 1px
                 return $this->spriteCache[$id] = Sprite::invalid($id, SpriteState::Empty);
             }
@@ -76,8 +81,8 @@ final class SwfSpriteRepository implements SpriteRepositoryInterface
             return $this->spriteCache[$id] = new Sprite(
                 id: $id,
                 pngData: $converter->toPng($sprite),
-                width: (int) ($bounds->width() / 20),
-                height: (int) ($bounds->height() / 20),
+                width: $width,
+                height: $height,
                 offsetX: (int) ($bounds->xmin / 20),
                 offsetY: (int) ($bounds->ymin / 20),
                 state: SpriteState::Valid,

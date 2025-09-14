@@ -21,16 +21,12 @@ final class Base64
     ];
 
     /**
-     * Disable constructor
-     */
-    private function __construct() { }
-
-    /**
      * Get int value of base64 char
      *
      * @param string $c Char to convert
      *
      * @return int
+     * @psalm-api
      */
     static public function ord(string $c): int
     {
@@ -59,6 +55,7 @@ final class Base64
      * @param int $value The int value
      *
      * @return string
+     * @psalm-api
      */
     static public function chr(int $value): string
     {
@@ -72,6 +69,7 @@ final class Base64
      * @param int $length The expected result length
      *
      * @return string The encoded value
+     * @psalm-api
      */
     static public function encode(int $value, int $length): string
     {
@@ -91,6 +89,7 @@ final class Base64
      * @param string $encoded The encoded value
      *
      * @return int
+     * @psalm-api
      */
     static public function decode(string $encoded): int
     {

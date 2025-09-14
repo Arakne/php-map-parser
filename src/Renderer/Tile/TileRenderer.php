@@ -11,6 +11,7 @@ use GdImage;
 
 use InvalidArgumentException;
 
+use function assert;
 use function ceil;
 use function imagecopy;
 use function imagecopyresampled;
@@ -19,7 +20,9 @@ use function log;
 use function max;
 
 /**
- * Class TileRenderer
+ * Render dofus maps as square tiles compatible with leaflet or other tile-based map viewers.
+ *
+ * @psalm-api
  */
 final class TileRenderer
 {
@@ -37,7 +40,7 @@ final class TileRenderer
      * The maximum zoom level
      * This value is log2($size)
      *
-     * @var positive-int
+     * @var non-negative-int
      */
     public readonly int $maxZoom;
 
@@ -47,7 +50,7 @@ final class TileRenderer
         /**
          * Resolve the map from the [X,Y] coordinates
          *
-         * @var Closure(MapCoordinates):MapStructure
+         * @var Closure(MapCoordinates):(MapStructure|null)
          */
         private readonly Closure $mapResolver,
 
@@ -82,6 +85,7 @@ final class TileRenderer
         private readonly int $tileSize = self::TILE_SIZE,
     ) {
         $this->size = self::computeSize($Xmin, $Xmax, $Ymin, $Ymax, $tileSize);
+        // @phpstan-ignore assign.propertyType
         $this->maxZoom = (int) log($this->size, 2);
     }
 
@@ -149,6 +153,7 @@ final class TileRenderer
         }
 
         $tileCount = $this->size >> $zoom;
+        assert($tileCount > 0);
 
         $startX = (int) ($x * $tileCount);
         $startY = (int) ($y * $tileCount);
@@ -160,7 +165,7 @@ final class TileRenderer
             for ($y = 0; $y < $tileCount; ++$y) {
                 $gd = $this->renderOriginalSize($startX + $x, $startY + $y);
 
-                imagecopyresampled($img, $gd, $x * $subtileSize, $y * $subtileSize, 0, 0, $subtileSize, $subtileSize, $this->tileSize, $this->tileSize);
+                imagecopyresampled($img, $gd, (int) ($x * $subtileSize), (int) ($y * $subtileSize), 0, 0, (int) $subtileSize, (int) $subtileSize, $this->tileSize, $this->tileSize);
             }
         }
 
@@ -171,8 +176,8 @@ final class TileRenderer
      * Render a single tile at the given [X,Y] coordinates with the maximum detail (i.e. max zoom)
      * Coordinates are in tile space, not map space
      *
-     * @param int $x
-     * @param int $y
+     * @param non-negative-int $x
+     * @param non-negative-int $y
      *
      * @return GdImage
      */
@@ -212,6 +217,15 @@ final class TileRenderer
         return $this->renderer->render($map);
     }
 
+    /**
+     * @param int $xMin
+     * @param int $xMax
+     * @param int $yMin
+     * @param int $yMax
+     * @param positive-int $tileSize
+     *
+     * @return positive-int
+     */
     private static function computeSize(int $xMin, int $xMax, int $yMin, int $yMax, int $tileSize): int
     {
         $realWidth = ($xMax - $xMin + 1) * MapRenderer::DISPLAY_WIDTH;
@@ -220,6 +234,9 @@ final class TileRenderer
         $size = max($realWidth, $realHeight);
         $tileCount = $size / $tileSize;
 
-        return 2 ** ceil(log($tileCount, 2));
+        $size = (int) 2 ** ceil(log($tileCount, 2));
+        assert($size >= 1);
+
+        return $size;
     }
 }

@@ -42,7 +42,7 @@ final class Sprite
          * The width of the sprite in pixels.
          * Note: SWF are in twips (1/20th of a pixel), but here we use pixels, so this value is 1/20th of the SWF value.
          *
-         * @var positive-int
+         * @var non-negative-int
          */
         public readonly int $width,
 
@@ -50,7 +50,7 @@ final class Sprite
          * The height of the sprite in pixels.
          * Note: SWF are in twips (1/20th of a pixel), but here we use pixels, so this value is 1/20th of the SWF value.
          *
-         * @var positive-int
+         * @var non-negative-int
          */
         public readonly int $height,
 
@@ -81,6 +81,7 @@ final class Sprite
      */
     public function gd(): GdImage
     {
+        // @phpstan-ignore assign.propertyType, return.type
         return $this->gd ??= imagecreatefromstring($this->pngData);
     }
 
@@ -95,6 +96,7 @@ final class Sprite
     public function flip(): self
     {
         $gd = imagecreatefromstring($this->pngData);
+        assert($gd !== false);
         imageflip($gd, IMG_FLIP_HORIZONTAL);
 
         $self = new self(

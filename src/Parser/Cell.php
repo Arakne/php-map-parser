@@ -22,13 +22,13 @@ final class Cell
     /**
      * Get the permitted movement type
      *
-     * The value is an int in range [0 - 5] :
+     * The value is an int in range [0 - 7] :
      *
      * - 0 means not walkable
      * - 1 means walkable, but not on a road
-     * - 2 to 5 means different levels of walkable cells. Bigger is the movement, lower is the weight on pathing
+     * - 2 to 7 means different levels of walkable cells. Bigger is the movement, lower is the weight on pathing
      *
-     * @var int<0, 5>
+     * @var int<0, 7>
      */
     public int $movement {
         get => ($this->data[2] & 56) >> 3;

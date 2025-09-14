@@ -7,11 +7,15 @@ final class MapCoordinates
     public function __construct(
         /**
          * The X coordinate of the map
+         *
+         * @psalm-api
          */
         public int $x,
 
         /**
          * The Y coordinate of the map
+         *
+         * @psalm-api
          */
         public int $y,
 

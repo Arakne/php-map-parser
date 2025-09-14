@@ -9,12 +9,14 @@ use Arakne\MapParser\Renderer\Layer\LayerRendererInterface;
 use Arakne\MapParser\Sprite\SpriteRepositoryInterface;
 use GdImage;
 
+use Override;
+
 use function imagecreatetruecolor;
 
 /**
- * Render a map
+ * Base dofus map renderer
  *
- * @todo interface
+ * @psalm-api
  */
 final readonly class MapRenderer implements MapRendererInterface
 {
@@ -33,12 +35,7 @@ final readonly class MapRenderer implements MapRendererInterface
         private SpriteRepositoryInterface $objects,
     ) {}
 
-    /**
-     * Render the given map as a GD image
-     *
-     * @param Map $map
-     * @return GdImage
-     */
+    #[Override]
     public function render(Map $map): GdImage
     {
         $img = imagecreatetruecolor(self::DISPLAY_WIDTH, self::DISPLAY_HEIGHT);

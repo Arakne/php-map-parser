@@ -23,7 +23,7 @@ final class CellDataParser
      *
      * @param string $data
      *
-     * @return Cell[]
+     * @return list<Cell>
      */
     public function parse(string $data): array
     {
@@ -38,7 +38,7 @@ final class CellDataParser
             $cellData = [];
 
             for ($i = 0; $i < 10; ++$i) {
-                $cellData[$i] = Base64::ord($part[$i]);
+                $cellData[] = Base64::ord($part[$i]);
             }
 
             $cells[] = $this->cache[$part] = new Cell($cellData);

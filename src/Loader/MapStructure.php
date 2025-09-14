@@ -6,6 +6,7 @@ use Arakne\MapParser\Parser\Cell;
 use Arakne\Swf\SwfFile;
 use InvalidArgumentException;
 
+use function max;
 use function str_ends_with;
 
 /**
@@ -16,7 +17,15 @@ final readonly class MapStructure
 {
     public function __construct(
         public int $id,
+
+        /**
+         * @var positive-int
+         */
         public int $width,
+
+        /**
+         * @var positive-int
+         */
         public int $height,
         public string $data,
         public int $background = 0,
@@ -68,8 +77,8 @@ final readonly class MapStructure
 
         return new MapStructure(
             (int) $content['id'],
-            (int) $content['width'],
-            (int) $content['height'],
+            max((int) $content['width'], 1),
+            max((int) $content['height'], 1),
             (string) $content['mapData'],
             (int) ($content['backgroundNum'] ?? 0),
             (int) ($content['ambianceId'] ?? 0),
