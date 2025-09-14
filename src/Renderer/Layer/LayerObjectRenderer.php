@@ -14,17 +14,17 @@ use function imagecopy;
 /**
  * Render a layer object, by extracting the sprite from swf
  */
-final class LayerObjectRenderer implements LayerRendererInterface
+final readonly class LayerObjectRenderer implements LayerRendererInterface
 {
     public function __construct(
-        private readonly SpriteRepositoryInterface $sprites,
+        private SpriteRepositoryInterface $sprites,
 
         /**
          * The function to get the object from the cell
          *
          * @var Closure(CellShape): LayerObjectInterface
          */
-        private readonly Closure $getter,
+        private Closure $getter,
     ) {}
 
     /**
@@ -37,28 +37,25 @@ final class LayerObjectRenderer implements LayerRendererInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function renderCell(CellShape $cell, GdImage $out): void
     {
         if (!$object = $this->getObject($cell)) {
             return;
         }
 
-        $sprite = $this->sprites->get($object->number());
+        $sprite = $this->sprites->get($object->number);
 
         if (!$sprite->valid) {
             return;
         }
 
-        if ($object->flip()) {
+        if ($object->flip) {
             $sprite = $sprite->flip();
         }
 
         $img = $sprite->gd();
-        $y = $cell->y() + $sprite->offsetY;
-        $x = $cell->x() + $sprite->offsetX;
+        $y = $cell->y + $sprite->offsetY;
+        $x = $cell->x + $sprite->offsetX;
 
         imagecopy($out, $img, $x, $y, 0, 0, $sprite->width, $sprite->height);
     }
@@ -74,7 +71,7 @@ final class LayerObjectRenderer implements LayerRendererInterface
     {
         $object = ($this->getter)($cell);
 
-        if (!$object->active()) {
+        if (!$object->active) {
             return null;
         }
 

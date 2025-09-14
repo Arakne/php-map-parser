@@ -10,6 +10,8 @@ use Swf\SwfLoader;
 
 /**
  * Service locator for php dofus map parser
+ *
+ * @todo refactor and make it a facade
  */
 class DofusMapParser
 {

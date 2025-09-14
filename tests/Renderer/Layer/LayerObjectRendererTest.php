@@ -50,7 +50,7 @@ class LayerObjectRendererTest extends TestCase
     {
         $this->renderer = new LayerObjectRenderer(
             $this->loader = new SwfSpriteRepository(glob(__DIR__.'/../../_files/clips/gfx/g*.swf')),
-            function (CellShape $cell) { return $cell->data()->ground(); }
+            function (CellShape $cell) { return $cell->data->ground; }
         );
 
         $this->map = new Map(0, 15, 17, 0, (new CellDataParser())->parse(file_get_contents(__DIR__.'/../../_files/10340.data')));

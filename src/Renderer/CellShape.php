@@ -8,65 +8,24 @@ use Arakne\MapParser\Parser\Cell;
 /**
  * A cell with position in pixel
  */
-final class CellShape
+final readonly class CellShape
 {
-    /**
-     * @var int
-     */
-    private $x;
+    private function __construct(
+        /**
+         * The x position in pixels
+         */
+        public int $x,
 
-    /**
-     * @var int
-     */
-    private $y;
+        /**
+         * The y position in pixels
+         */
+        public int $y,
 
-    /**
-     * @var Cell
-     */
-    private $data;
-
-
-    /**
-     * CellShape constructor.
-     *
-     * @param int $x
-     * @param int $y
-     * @param Cell $data
-     */
-    public function __construct(int $x, int $y, Cell $data)
-    {
-        $this->x = $x;
-        $this->y = $y;
-        $this->data = $data;
-    }
-
-    /**
-     * The x position in pixels
-     *
-     * @return int
-     */
-    public function x(): int
-    {
-        return $this->x;
-    }
-
-    /**
-     * The y position in pixels
-     *
-     * @return int
-     */
-    public function y(): int
-    {
-        return $this->y;
-    }
-
-    /**
-     * @return Cell
-     */
-    public function data(): Cell
-    {
-        return $this->data;
-    }
+        /**
+         * Base cell object
+         */
+        public Cell $data,
+    ) {}
 
     /**
      * Transform cell data to cell shapes
@@ -80,12 +39,12 @@ final class CellShape
     {
         $shapes = [];
 
-        $_loc14 = $map->width() - 1;
+        $_loc14 = $map->width - 1;
         $_loc9 = -1;
         $_loc10 = 0;
         $_loc11 = 0;
 
-        foreach ($map->cells() as $cell) {
+        foreach ($map->cells as $cell) {
             if ($_loc9 === $_loc14) {
                 $_loc9 = 0;
                 ++$_loc10;
@@ -102,9 +61,9 @@ final class CellShape
             }
 
             $x = (int)($_loc9 * MapRenderer::CELL_WIDTH + $_loc11);
-            $y = (int)($_loc10 * MapRenderer::CELL_HALF_HEIGHT - MapRenderer::LEVEL_HEIGHT * ($cell->ground()->level() - 7));
+            $y = (int)($_loc10 * MapRenderer::CELL_HALF_HEIGHT - MapRenderer::LEVEL_HEIGHT * ($cell->ground->level - 7));
 
-            if (!$ignoreInactive || $cell->active()) {
+            if (!$ignoreInactive || $cell->active) {
                 $shapes[] = new CellShape($x, $y, $cell);
             }
         }

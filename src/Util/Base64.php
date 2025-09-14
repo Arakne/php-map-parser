@@ -4,13 +4,17 @@ namespace Arakne\MapParser\Util;
 
 use InvalidArgumentException;
 
+use function ord;
+use function str_repeat;
+use function strlen;
+
 /**
  * Utility class for Dofus Pseudo base 64
  */
 
 final class Base64
 {
-    private const CHARSET = [
+    private const array CHARSET = [
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
         't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
         'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_'
@@ -31,27 +35,22 @@ final class Base64
     static public function ord(string $c): int
     {
         if ($c >= 'a' && $c <= 'z') {
-            return \ord($c) - \ord('a');
+            return ord($c) - ord('a');
         }
 
         if ($c >= 'A' && $c <= 'Z') {
-            return \ord($c) - \ord('A') + 26;
+            return ord($c) - ord('A') + 26;
         }
 
         if ($c >= '0' && $c <= '9') {
-            return \ord($c) - \ord('0') + 52;
+            return ord($c) - ord('0') + 52;
         }
 
-        switch ($c) {
-            case '-':
-                return 62;
-
-            case '_':
-                return 63;
-
-            default:
-                throw new InvalidArgumentException('Invalid char value');
-        }
+        return match ($c) {
+            '-' => 62,
+            '_' => 63,
+            default => throw new InvalidArgumentException('Invalid char value'),
+        };
     }
 
     /**

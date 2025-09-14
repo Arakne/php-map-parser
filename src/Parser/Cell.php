@@ -2,6 +2,9 @@
 
 namespace Arakne\MapParser\Parser;
 
+use function assert;
+use function count;
+
 /**
  * Parsed cell data
  *
@@ -10,27 +13,10 @@ namespace Arakne\MapParser\Parser;
 final class Cell
 {
     /**
-     * @var int[]
-     */
-    private $data;
-
-
-    /**
-     * Cell constructor.
-     *
-     * @param int[] $data
-     */
-    public function __construct(array $data)
-    {
-        $this->data = $data;
-    }
-
-    /**
      * Check if the cell do not block the line of sight
      */
-    public function lineOfSight(): bool
-    {
-        return ($this->data[0] & 1) === 1;
+    public bool $lineOfSight {
+        get => ($this->data[0] & 1) === 1;
     }
 
     /**
@@ -41,47 +27,53 @@ final class Cell
      * - 0 means not walkable
      * - 1 means walkable, but not on a road
      * - 2 to 5 means different levels of walkable cells. Bigger is the movement, lower is the weight on pathing
+     *
+     * @var int<0, 5>
      */
-    public function movement(): int
-    {
-        return ($this->data[2] & 56) >> 3;
+    public int $movement {
+        get => ($this->data[2] & 56) >> 3;
     }
 
     /**
      * Check if the cell is active or not
      */
-    public function active(): bool
-    {
-        return ($this->data[0] & 32) >> 5 === 1;
+    public bool $active {
+        get => ($this->data[0] & 32) >> 5 === 1;
     }
 
     /**
      * Get the ground object
-     *
-     * @return GroundObject
      */
-    public function ground(): GroundObject
-    {
-        return new GroundObject($this->data);
+    public GroundObject $ground {
+        get => $this->ground ??= new GroundObject($this->data);
     }
 
     /**
-     * Get the object on the first layer
-     *
-     * @return LayerObject1
+     * Get the object on the first layer (placed above the ground, but below creatures and second layer)
      */
-    public function layer1(): LayerObject1
-    {
-        return new LayerObject1($this->data);
+    public LayerObject1 $layer1 {
+        get => $this->layer1 ??= new LayerObject1($this->data);
     }
 
     /**
-     * Get the object on the second layer
-     *
-     * @return LayerObject2
+     * Get the object on the second layer (place above all sprites)
      */
-    public function layer2(): LayerObject2
-    {
-        return new LayerObject2($this->data);
+    public LayerObject2 $layer2 {
+        get => $this->layer2 ??= new LayerObject2($this->data);
+    }
+
+    /**
+     * Cell constructor.
+     *
+     * @param int[] $data
+     */
+    public function __construct(
+        /**
+         * The raw cell data (10 bytes)
+         * @var list<int>
+         */
+        private readonly array $data,
+    ) {
+        assert(count($this->data) === 10);
     }
 }

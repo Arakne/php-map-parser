@@ -13,8 +13,21 @@ final readonly class Map
 {
     public function __construct(
         public int $id,
+
+        /**
+         * @var non-negative-int
+         */
         public int $width,
+
+        /**
+         * @var non-negative-int
+         */
         public int $height,
+
+        /**
+         * The background sprite id.
+         * If 0, no background is defined.
+         */
         public int $background,
 
         /**
@@ -22,36 +35,4 @@ final readonly class Map
          */
         public array $cells
     ) {}
-
-    /**
-     * @return int
-     */
-    public function id(): int
-    {
-        return $this->id;
-    }
-
-    /**
-     * @return int
-     */
-    public function width(): int
-    {
-        return $this->width;
-    }
-
-    /**
-     * @return int
-     */
-    public function height(): int
-    {
-        return $this->height;
-    }
-
-    /**
-     * @return Cell[]
-     */
-    public function cells(): array
-    {
-        return $this->cells;
-    }
 }

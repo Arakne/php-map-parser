@@ -7,8 +7,6 @@ use Arakne\MapParser\Sprite\SpriteRepositoryInterface;
 use GdImage;
 use Override;
 
-use function var_dump;
-
 /**
  * Renders the background layer of the map.
  */

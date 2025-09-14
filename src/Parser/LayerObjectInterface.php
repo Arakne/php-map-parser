@@ -9,29 +9,21 @@ interface LayerObjectInterface
 {
     /**
      * The object number on the cell
-     *
-     * @return int
      */
-    public function number(): int;
+    public int $number { get; }
 
     /**
      * The rotation value of the sprite
-     *
-     * @return int
      */
-    public function rotation(): int;
+    public int $rotation { get; }
 
     /**
      * Does the sprite has been flipped ?
-     *
-     * @return bool
      */
-    public function flip(): bool;
+    public bool $flip { get; }
 
     /**
      * Check if the layer is active (i.e. has an object)
-     *
-     * @return bool
      */
-    public function active(): bool;
+    public bool $active { get; }
 }

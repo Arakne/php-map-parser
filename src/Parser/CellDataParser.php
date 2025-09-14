@@ -4,6 +4,8 @@ namespace Arakne\MapParser\Parser;
 
 use Arakne\MapParser\Util\Base64;
 
+use function str_split;
+
 /**
  * Parser for cells data string
  */
@@ -14,8 +16,7 @@ final class CellDataParser
      *
      * @var Cell[]
      */
-    private $cache = [];
-
+    private array $cache = [];
 
     /**
      * Parse the cells data
