@@ -5,10 +5,14 @@ namespace Arakne\MapParser\Renderer;
 
 use Arakne\MapParser\Loader\Map;
 use Arakne\MapParser\Parser\CellDataParser;
+use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
+use Arakne\MapParser\Util\XorCipher;
 use PHPUnit\Framework\TestCase;
-use Swf\Cli\Jar;
-use Swf\SwfLoader;
+
+use function file_get_contents;
+use function imagepng;
+use function imagesx;
 
 /**
  * Class MapRenderTest
@@ -22,13 +26,11 @@ class MapRenderTest extends TestCase
      */
     private $renderer;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $swfLoader = new SwfLoader(new Jar(__DIR__.'/../../../../.local/app/ffdec_11.2.0_nightly1722/ffdec.jar'));
-
         $this->renderer = new MapRenderer(
-            $swfLoader->bulk(glob(__DIR__.'/../_files/clips/gfx/g*.swf')),
-            $swfLoader->bulk(glob(__DIR__.'/../_files/clips/gfx/o*.swf'))
+            new SwfSpriteRepository(glob(__DIR__.'/../_files/clips/gfx/g*.swf')),
+            new SwfSpriteRepository(glob(__DIR__.'/../_files/clips/gfx/o*.swf')),
         );
     }
 
@@ -37,17 +39,34 @@ class MapRenderTest extends TestCase
      */
     public function test_render()
     {
-        $map = new Map(0, 15, 17, (new CellDataParser())->parse(file_get_contents(__DIR__.'/../_files/10340.data')));
+        $map = new Map(0, 15, 17, 0, (new CellDataParser())->parse(file_get_contents(__DIR__.'/../_files/10340.data')));
         $img = $this->renderer->render($map);
 
-        $img->save(__DIR__.'/_files/render.png');
+        imagepng($img, __DIR__.'/_files/render.png');
 
-        $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, $img->height());
-        $this->assertEquals(MapRenderer::DISPLAY_WIDTH, $img->width());
-
-        $img->destroy();
+        $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
+        $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
 
         $this->assertImages(__DIR__.'/_files/10340.png', __DIR__.'/_files/render.png');
+        unlink(__DIR__.'/_files/render.png');
+    }
+
+    /**
+     *
+     */
+    public function test_render_with_background()
+    {
+        $map = new Map(0, 15, 17, 438, (new CellDataParser())->parse(
+            XorCipher::fromHexKey(file_get_contents(__DIR__.'/../_files/10302.key'))->decrypt(file_get_contents(__DIR__.'/../_files/10302.data'))
+        ));
+        $img = $this->renderer->render($map);
+
+        imagepng($img, __DIR__.'/_files/render.png');
+
+        $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
+        $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
+
+        $this->assertImages(__DIR__.'/_files/10302.png', __DIR__.'/_files/render.png');
         unlink(__DIR__.'/_files/render.png');
     }
 }

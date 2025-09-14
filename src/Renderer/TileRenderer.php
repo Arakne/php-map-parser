@@ -2,34 +2,39 @@
 
 namespace Arakne\MapParser\Renderer;
 
-use Arakne\MapParser\Loader\SimpleMapLoader;
-use Intervention\Image\Image;
-use Intervention\Image\ImageManager;
+use Arakne\MapParser\Loader\MapLoader;
+use Arakne\MapParser\Loader\MapStructure;
+use GdImage;
+
+use function imagecreatetruecolor;
+use function var_dump;
 
 /**
  * Class TileRenderer
  */
 class TileRenderer
 {
+    public const int TILE_SIZE = 256;
+
     /**
      * @var MapRenderer
      */
     private $renderer;
 
     /**
-     * @var callable
+     * @var callable(MapCoordinates):MapStructure
      */
     private $mapResolver;
 
     /**
      * @var int
      */
-    private $tileWidth = 256;
+    private $tileWidth = self::TILE_SIZE;
 
     /**
      * @var int
      */
-    private $tileHeight = 256;
+    private $tileHeight = self::TILE_SIZE;
 
     /**
      * @var int
@@ -126,96 +131,40 @@ class TileRenderer
         return $maps;
     }
 
-    public function render(int $x, int $y): Image
+    public function render(int $x, int $y): GdImage
     {
-        $cacheFile = $this->tileCacheFile($x, $y);
-
-        if (file_exists($cacheFile)) {
-            return (new ImageManager())->make($cacheFile);
-        }
-
-        $img = (new ImageManager())->canvas($this->tileWidth, $this->tileHeight);
+        $img = imagecreatetruecolor($this->tileWidth, $this->tileHeight);
 
         foreach ($this->toMapCoordinates($x, $y) as $mapCoordinate) {
             if (!$map = $this->renderMap($mapCoordinate)) {
                 continue;
             }
 
-            $map = (clone $map)->crop(
-                MapRenderer::DISPLAY_WIDTH,
-                MapRenderer::DISPLAY_HEIGHT,
-                $mapCoordinate->xSourceOffset(),
-                $mapCoordinate->ySourceOffset()
-            );
-
-            $img->insert(
+            imagecopy(
+                $img,
                 $map,
-                'top-left',
                 $mapCoordinate->xDestinationOffset(),
-                $mapCoordinate->yDestinationOffset()
+                $mapCoordinate->yDestinationOffset(),
+                $mapCoordinate->xSourceOffset(),
+                $mapCoordinate->ySourceOffset(),
+                MapRenderer::DISPLAY_WIDTH,
+                MapRenderer::DISPLAY_HEIGHT
             );
-
-
-            //imagecopy(
-            //    $img->getCore(),
-            //    $map->getCore(),
-            //    $mapCoordinate->xDestinationOffset(),
-            //    $mapCoordinate->yDestinationOffset(),
-            //    $mapCoordinate->xSourceOffset(),
-            //    $mapCoordinate->ySourceOffset(),
-            //    MapRenderer::DISPLAY_WIDTH,
-            //    MapRenderer::DISPLAY_HEIGHT
-            //);
-            //imagedestroy($map);
-        }
-
-        if ($cacheFile) {
-            $img->save($cacheFile);
         }
 
         return $img;
     }
 
-    private function renderMap(MapCoordinates $coordinates): ?Image
+    private function renderMap(MapCoordinates $coordinates): ?GdImage
     {
         if (!$map = ($this->mapResolver)($coordinates)) {
             return null;
         }
 
-        $cacheFile = $this->mapCacheFile($map['id']);
+        $mapLoader = new MapLoader();
+        $map = $mapLoader->load($map);
 
-        if ($cacheFile && file_exists($cacheFile)) {
-            return (new ImageManager())->make($cacheFile);
-        }
-
-        $mapLoader = new SimpleMapLoader();
-        $map = $mapLoader->load($map['id'], $map['width'], $map['height'], $map['mapData']);
-
-        $img = $this->renderer->render($map);
-
-        if ($cacheFile) {
-            $img->save($cacheFile);
-        }
-
-        return $img;
-    }
-
-    private function mapCacheFile(int $mapId): ?string
-    {
-        if (!$this->cacheDir) {
-            return null;
-        }
-
-        return $this->cacheDir . DIRECTORY_SEPARATOR . 'maps' . DIRECTORY_SEPARATOR . $mapId . '.png';
-    }
-
-    private function tileCacheFile(int $x, int $y): ?string
-    {
-        if (!$this->cacheDir) {
-            return null;
-        }
-
-        return $this->cacheDir . DIRECTORY_SEPARATOR . 'tiles' . DIRECTORY_SEPARATOR . $x . '_' . $y . '.png';
+        return $this->renderer->render($map);
     }
 }
 

@@ -1,0 +1,41 @@
+name: Build
+
+on:
+    push:
+        branches: [ master ]
+    pull_request:
+        branches: [ master ]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                php-versions: ['8.4']
+        name: PHP ${{ matrix.php-versions }}
+
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Install PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ matrix.php-versions }}
+                  extensions: json
+                  ini-values: date.timezone=Europe/Paris
+            - name: Check PHP Version
+              run: php -v
+
+            - name: Install SVG renderer commands
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y librsvg2-bin
+
+            - name: Validate composer.json and composer.lock
+              run: composer validate --strict
+
+            - name: Install dependencies
+              run: composer install --prefer-dist --no-progress
+
+            - name: Run test suite
+              run: vendor/bin/phpunit

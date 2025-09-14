@@ -5,66 +5,32 @@ namespace Arakne\MapParser\Renderer\Layer;
 use Arakne\MapParser\Loader\Map;
 use Arakne\MapParser\Parser\LayerObjectInterface;
 use Arakne\MapParser\Renderer\CellShape;
-use Bdf\Collection\Stream\Streams;
-use Bdf\Collection\Util\Functor\Transformer\Getter;
-use Intervention\Image\Image;
-use Intervention\Image\ImageManager;
-use Swf\Processor\BulkLoader;
+use Arakne\MapParser\Sprite\SpriteRepositoryInterface;
+use Closure;
+use GdImage;
+
+use function imagecopy;
 
 /**
  * Render a layer object, by extracting the sprite from swf
  */
 final class LayerObjectRenderer implements LayerRendererInterface
 {
-    /**
-     * @var ImageManager
-     */
-    private $imageManager;
+    public function __construct(
+        private readonly SpriteRepositoryInterface $sprites,
 
-    /**
-     * @var BulkLoader
-     */
-    private $loader;
-
-    /**
-     * @var callable
-     */
-    private $getter;
-
-
-    /**
-     * LayerObjectRenderer constructor.
-     *
-     * @param ImageManager $imageManager The image manager
-     * @param BulkLoader $loader Loader for sprites
-     * @param callable $getter Get the cell object layer. Prototype : function (CellShape $cell): LayerObjectInterface
-     */
-    public function __construct(ImageManager $imageManager, BulkLoader $loader, callable $getter)
-    {
-        $this->imageManager = $imageManager;
-        $this->loader = $loader;
-        $this->getter = $getter;
-    }
+        /**
+         * The function to get the object from the cell
+         *
+         * @var Closure(CellShape): LayerObjectInterface
+         */
+        private readonly Closure $getter,
+    ) {}
 
     /**
      * {@inheritdoc}
      */
-    public function prepare(Map $map, array $cells): void
-    {
-        Streams::wrap($cells)
-            ->map($this->getter)
-            ->filter(new Getter('active'))
-            ->map(new Getter('number'))
-            ->forEach([$this->loader, 'add'])
-        ;
-
-        $this->loader->load();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function render(Map $map, array $cells, Image $out): void
+    public function render(Map $map, array $cells, GdImage $out): void
     {
         foreach ($cells as $cell) {
             $this->renderCell($cell, $out);
@@ -74,34 +40,27 @@ final class LayerObjectRenderer implements LayerRendererInterface
     /**
      * {@inheritdoc}
      */
-    public function renderCell(CellShape $cell, Image $out): void
+    public function renderCell(CellShape $cell, GdImage $out): void
     {
         if (!$object = $this->getObject($cell)) {
             return;
         }
 
-        $sprite = $this->loader->get($object->number());
+        $sprite = $this->sprites->get($object->number());
 
-        // @todo exception ?
-        if (!$sprite || !$sprite->bounds() || $sprite->bounds()->width() == 0) {
-            //throw new \RuntimeException('Invalid bounds '.$sprite->frame());
+        if (!$sprite->valid) {
             return;
         }
 
-        $img = $this->imageManager->make($sprite->frame());
-
-        $y = $cell->y() + $sprite->bounds()->Yoffset();
-
         if ($object->flip()) {
-            $img->flip();
-
-            $x = $cell->x() - $sprite->bounds()->Xoffset() - $sprite->bounds()->width();
-        } else {
-            $x = $cell->x() + $sprite->bounds()->Xoffset();
+            $sprite = $sprite->flip();
         }
 
-        $out->insert($img, 'top-left', $x, $y);
-        $img->destroy();
+        $img = $sprite->gd();
+        $y = $cell->y() + $sprite->offsetY;
+        $x = $cell->x() + $sprite->offsetX;
+
+        imagecopy($out, $img, $x, $y, 0, 0, $sprite->width, $sprite->height);
     }
 
     /**

@@ -3,11 +3,13 @@
 namespace Arakne\MapParser\Renderer;
 
 use Arakne\MapParser\Loader\Map;
+use Arakne\MapParser\Renderer\Layer\BackgroundLayerRenderer;
 use Arakne\MapParser\Renderer\Layer\LayerObjectRenderer;
 use Arakne\MapParser\Renderer\Layer\LayerRendererInterface;
-use Intervention\Image\Image;
-use Intervention\Image\ImageManager;
-use Swf\Processor\BulkLoader;
+use Arakne\MapParser\Sprite\SpriteRepositoryInterface;
+use GdImage;
+
+use function imagecreatetruecolor;
 
 /**
  * Render a map
@@ -24,44 +26,23 @@ class MapRenderer
 
     const LEVEL_HEIGHT = 20;
 
-    /**
-     * @var BulkLoader
-     */
-    private $groundLoader;
+    public function __construct(
+        private readonly SpriteRepositoryInterface $grounds,
+        private readonly SpriteRepositoryInterface $objects,
+    ) {}
 
-    /**
-     * @var BulkLoader
-     */
-    private $objectLoader;
-
-    /**
-     * @var ImageManager
-     */
-    private $imageManager;
-
-    public function __construct(BulkLoader $groundLoader, BulkLoader $objectLoader, ImageManager $imageManager = null)
+    public function render(Map $map): GdImage
     {
-        $this->groundLoader = $groundLoader;
-        $this->objectLoader = $objectLoader;
-        $this->imageManager = $imageManager ?: new ImageManager();
-    }
-
-    public function render(Map $map): Image
-    {
-        $img = $this->imageManager->canvas(self::DISPLAY_WIDTH, self::DISPLAY_HEIGHT);
-
+        $img = imagecreatetruecolor(self::DISPLAY_WIDTH, self::DISPLAY_HEIGHT);
         $shapes = CellShape::fromMap($map);
 
         /** @var LayerRendererInterface[] $layers */
         $layers = [
-            new LayerObjectRenderer($this->imageManager, $this->groundLoader, function (CellShape $cell) { return $cell->data()->ground(); }),
-            new LayerObjectRenderer($this->imageManager, $this->objectLoader, function (CellShape $cell) { return $cell->data()->layer1(); }),
-            new LayerObjectRenderer($this->imageManager, $this->objectLoader, function (CellShape $cell) { return $cell->data()->layer2(); }),
+            new BackgroundLayerRenderer($this->grounds),
+            new LayerObjectRenderer($this->grounds, static fn (CellShape $cell) => $cell->data()->ground()),
+            new LayerObjectRenderer($this->objects, static fn (CellShape $cell) => $cell->data()->layer1()),
+            new LayerObjectRenderer($this->objects, static fn (CellShape $cell) => $cell->data()->layer2()),
         ];
-
-        foreach ($layers as $layer) {
-            $layer->prepare($map, $shapes);
-        }
 
         foreach ($layers as $layer) {
             $layer->render($map, $shapes, $img);

@@ -14,7 +14,7 @@ class CellDataParserTest extends TestCase
      */
     private $parser;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->parser = new CellDataParser();
     }

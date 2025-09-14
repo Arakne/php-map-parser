@@ -2,6 +2,9 @@
         bootstrap="tests/bootstrap.php"
         colors="true"
 >
+    <php>
+        <ini name="memory_limit" value="1G"/>
+    </php>
     <testsuites>
         <testsuite name="unit">
             <directory>tests/</directory>

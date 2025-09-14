@@ -30,7 +30,7 @@ if (!is_dir($cacheDir)) {
 
 $maps = $pdo->query('select * from maps')->fetchAll(PDO::FETCH_ASSOC);
 $mapsCacheDir = $cacheDir.'/maps';
-$mapLoader = new \Arakne\MapParser\Loader\SimpleMapLoader();
+$mapLoader = new \Arakne\MapParser\Loader\MapLoader();
 
 if (!is_dir($mapsCacheDir)) {
     mkdir($mapsCacheDir, 0777, true);

@@ -2,33 +2,38 @@
 
 set_time_limit(-1);
 
+use Arakne\MapParser\Loader\MapLoader;
+use Arakne\MapParser\Loader\MapStructure;
+use Arakne\MapParser\Renderer\MapCoordinates;
 use Arakne\MapParser\Renderer\MapRenderer;
-use Swf\Cli\Jar;
-use Swf\SwfLoader;
+use Arakne\MapParser\Renderer\TileRenderer;
+use Arakne\MapParser\Sprite\SwfSpriteRepository;
+use Arakne\Swf\SwfFile;
+use Workerman\Connection\TcpConnection;
+use Workerman\Protocols\Http\Request;
+use Workerman\Protocols\Http\Response;
 
 require_once __DIR__.'/vendor/autoload.php';
 
-$pdo = new PDO('mysql:host=127.0.0.1;dbname=araknemu', 'araknemu');
+$pdo = new PDO('mysql:host=127.0.0.1;dbname=araknemu', 'araknemu', 'araknemu');
 
 $areas = $pdo->query('select SUBAREA_ID FROM SUBAREA WHERE AREA_ID = 45')->fetchAll();
 $areas = array_map(function ($a) { return $a['SUBAREA_ID']; }, $areas);
 
 $cacheDir = __DIR__.'/cache/incarnam';
 $dofusClipsDir = __DIR__.'/gfx';
-
-$swfLoader = new SwfLoader(new Jar(__DIR__.'/ffdec_15.1.1/ffdec.jar'));
+$dofusMapsDir = '/srv/www/htdocs/dofus/dofus_officiel/maps';
 
 $mapRenderer = new MapRenderer(
-    $swfLoader->bulk(glob($dofusClipsDir.'/g*.swf'))->setResultDirectory($cacheDir.'/grounds'),
-    $swfLoader->bulk(glob($dofusClipsDir.'/o*.swf'))->setResultDirectory($cacheDir.'/objects')
+    new SwfSpriteRepository(glob($dofusClipsDir.'/g*.swf')),
+    new SwfSpriteRepository(glob($dofusClipsDir.'/o*.swf')),
 );
+
+$mapLoader = new MapLoader();
 
 if (!is_dir($cacheDir)) {
     mkdir($cacheDir, 0777, true);
 }
-
-const TILE_SIZE = 256;
-const WH_RATE = MapRenderer::DISPLAY_WIDTH / MapRenderer::DISPLAY_HEIGHT;
 
 $Xmin = 0;
 $Xmax = 0;
@@ -61,53 +66,41 @@ foreach ($areas as $area) {
     }
 }
 
-function mapByCoords($x, $y) {
-    global $areas, $pdo, $cacheDir, $mapRenderer;
+//function mapByCoords($x, $y) {
+//    global $areas, $pdo, $cacheDir, $mapRenderer, $mapLoader, $dofusMapsDir;
+//
+//    $query = 'SELECT * FROM maps WHERE mappos IN (';
+//
+//    $pos = [];
+//
+//    foreach ($areas as $area) {
+//        $pos[] = '"'.$x.','.$y.','.$area.'"';
+//    }
+//
+//    $map = $pdo->query('SELECT * FROM maps WHERE mappos IN ('.implode(',', $pos).')')->fetch();
+//
+//    if (!$map) {
+//        return null;
+//    }
+//
+//    $map = $mapLoader->fromSwfFile(new SwfFile($dofusMapsDir . '/' . $map['id'] . '_' . $map['date'] . ($map['key'] ? 'X' : '') . '.swf'), $map['key']);
+//
+//    //if (!file_exists($cacheDir.'/'.$map['id'].'.png')) {
+//        $img = $mapRenderer->render($map);
+//        ob_start();
+//        imagepng($img/*, $cacheDir.'/'.$map->id.'.png'*/);
+//
+//        return ob_get_clean();
+//        //$img->save($cacheDir.'/'.$map['id'].'.png');
+//    //}
+//
+//    //return $cacheDir.'/'.$map->id.'.png';
+//}
 
-    $query = 'SELECT * FROM maps WHERE mappos IN (';
-
-    $pos = [];
-
-    foreach ($areas as $area) {
-        $pos[] = '"'.$x.','.$y.','.$area.'"';
-    }
-
-    $map = $pdo->query('SELECT * FROM maps WHERE mappos IN ('.implode(',', $pos).')')->fetch();
-
-    if (!$map) {
-        return null;
-    }
-
-    if (!file_exists($cacheDir.'/'.$map['id'].'.png')) {
-        $img = $mapRenderer->render($map['mapData'], 15, 17);
-        imagepng($img, $cacheDir.'/'.$map['id'].'.png');
-        imagedestroy($img);
-    }
-
-    return $cacheDir.'/'.$map['id'].'.png';
-}
-
-$zoom = $_GET['z'] ?? 0;
-
-$x = $_GET['x'] ?? 0;
-$y = $_GET['y'] ?? 0;
-
-if (!is_dir($cacheDir.'/area')) {
-    mkdir($cacheDir.'/area', 0777, true);
-}
-
-$areaFile = $cacheDir.'/area/'.$x.'_'.$y.'_'.$zoom.'.png';
-
-if (file_exists($areaFile)) {
-    header('Content-Type: image/png');
-    readfile($areaFile);
-    exit;
-}
-
-$tileRenderer = new \Arakne\MapParser\Renderer\TileRenderer(
+$tileRenderer = new TileRenderer(
     $mapRenderer,
-    function (\Arakne\MapParser\Renderer\MapCoordinates $coordinates) use($areas, $pdo) {
-        $query = 'SELECT * FROM maps WHERE mappos IN (';
+    function (MapCoordinates $coordinates) use($areas, $dofusMapsDir) {
+        $pdo = new PDO('mysql:host=127.0.0.1;dbname=araknemu', 'araknemu', 'araknemu');
 
         $pos = [];
 
@@ -115,44 +108,87 @@ $tileRenderer = new \Arakne\MapParser\Renderer\TileRenderer(
             $pos[] = '"'.$coordinates->x().','.$coordinates->y().','.$area.'"';
         }
 
-        return $pdo->query('SELECT * FROM maps WHERE mappos IN ('.implode(',', $pos).')')->fetch();
+        $map = $pdo->query('SELECT * FROM maps WHERE mappos IN ('.implode(',', $pos).')')->fetch();
+
+        if (!$map) {
+            return null;
+        }
+
+        $mapFile = $dofusMapsDir . '/' . $map['id'] . '_' . $map['date'] . ($map['key'] ? 'X' : '') . '.swf';
+
+        if (!is_file($mapFile)) {
+            return null;
+        }
+
+        return MapStructure::fromSwfFile(new SwfFile($mapFile), $map['key']);
     },
     $Xmin,
     $Ymin,
-    $cacheDir
+    null,
 );
 
-$width = $Xmax - $Xmin + 1;
-$height = $Ymax - $Ymin + 1;
+$worker = new \Workerman\Worker('http://0.0.0.0:5000');
+$worker->count = 8;
 
-$realWidth = ($Xmax - $Xmin) * MapRenderer::DISPLAY_WIDTH;
-$realHeight = ($Ymax - $Ymin) * MapRenderer::DISPLAY_HEIGHT;
+$worker->onMessage = function (TcpConnection $connection, Request $request) use ($tileRenderer, $Xmin, $Xmax, $Ymin, $Ymax): void {
+    header('Content-Type: image/png');
 
-$size = max($realWidth, $realHeight);
+    $x = (int) $request->get('x', 0);
+    $y = (int) $request->get('y', 0);
+    $zoom = (int) $request->get('z', 0);
 
-// @todo 2^n
-$tileCount = ceil($size / TILE_SIZE);
-$tileCount /= pow(2, $zoom);
+    // Simple tile renderer (max zoom)
+    /*$gd = $tileRenderer->render(
+        (int) $request->get('x', 3),
+        (int) $request->get('y', 3),
+    );
 
-$startX = $x * $tileCount;
-$startY = $y * $tileCount;
+    ob_start();
+    imagepng($gd);
+    $imageData = ob_get_clean();
 
-$img = imagecreatetruecolor(TILE_SIZE, TILE_SIZE);
-$subtileSize = TILE_SIZE / $tileCount;
+    $connection->send(
+        new Response(
+            headers: ['Content-Type' => 'image/png'],
+            body: $imageData,
+        )
+    );*/
 
-for ($x = 0; $x <= $tileCount; ++$x) {
-    for ($y = 0; $y <= $tileCount; ++$y) {
-        $mapTile = $tileRenderer->render($startX + $x, $startY + $y);
-        $gd = $mapTile->getCore();
+    $realWidth = ($Xmax - $Xmin + 1) * MapRenderer::DISPLAY_WIDTH;
+    $realHeight = ($Ymax - $Ymin + 1) * MapRenderer::DISPLAY_HEIGHT;
 
-        imagecopyresampled($img, $gd, $x * $subtileSize, $y * $subtileSize, 0, 0, $subtileSize, $subtileSize, 256, 256);
-        //imagedestroy($mapTile);
+    $size = max($realWidth, $realHeight);
+    $size = pow(2, ceil(log($size, 2)));
+
+    // @todo 2^n
+    $tileCount = ceil($size / TileRenderer::TILE_SIZE);
+    $tileCount /= pow(2, $zoom);
+    $tileCount = (int) $tileCount;
+
+    $startX = (int) ($x * $tileCount);
+    $startY = (int) ($y * $tileCount);
+
+    $img = imagecreatetruecolor(TileRenderer::TILE_SIZE, TileRenderer::TILE_SIZE);
+    $subtileSize = TileRenderer::TILE_SIZE / $tileCount;
+
+    for ($x = 0; $x <= $tileCount; ++$x) {
+        for ($y = 0; $y <= $tileCount; ++$y) {
+            $gd = $tileRenderer->render($startX + $x, $startY + $y);
+
+            imagecopyresampled($img, $gd, $x * $subtileSize, $y * $subtileSize, 0, 0, $subtileSize, $subtileSize, TileRenderer::TILE_SIZE, TileRenderer::TILE_SIZE);
+        }
     }
-}
 
-// Save cache
-imagepng($img, $areaFile);
+    ob_start();
+    imagepng($img);
+    $imageData = ob_get_clean();
 
-header('Content-Type: image/png');
-imagepng($img);
-imagedestroy($img);
+    $connection->send(
+        new Response(
+            headers: ['Content-Type' => 'image/png'],
+            body: $imageData,
+        )
+    );
+};
+
+\Workerman\Worker::runAll();

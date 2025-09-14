@@ -8,28 +8,17 @@
             "email": "quatrevieux.vincent@gmail.com"
         }
     ],
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/b2pweb/bdf-collections"
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/vincent4vx/php-swf"
-        }
-    ],
     "require": {
-        "php": ">=7.1",
-        "b2pweb/bdf-collections": "~1.1",
-        "vincent4vx/php-swf": "dev-master",
-        "intervention/image": "^2.5",
-        "psr/cache": "^1.0",
-        "thadafinser/psr6-null-cache": "^0.1.0"
+        "php": "~8.4",
+        "ext-imagick": "*",
+        "ext-gd": "*",
+        "intervention/image": "^3.11",
+        "arakne/swf": "^0.2.2",
+        "psr/cache": "~1.0|~2.0|~3.0",
+        "walkor/workerman": "~5.1"
     },
     "require-dev": {
-        "ext-imagick": "*",
-        "phpunit/phpunit": "~7.0",
-        "cache/filesystem-adapter": "^1.0"
+        "phpunit/phpunit": "~9.5"
     },
     "autoload": {
         "psr-4": {
