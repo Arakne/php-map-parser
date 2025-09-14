@@ -64,3 +64,6 @@ jobs:
 
             - name: Run static analysis
               run: vendor/bin/phpstan
+
+            - name: Run checkstyle
+              run: vendor/bin/php-cs-fixer check --diff --verbose

@@ -33,6 +33,6 @@ final readonly class Map
         /**
          * @var list<Cell>
          */
-        public array $cells
+        public array $cells,
     ) {}
 }

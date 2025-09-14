@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Arakne\MapParser\Parser;
 
 /**
@@ -29,6 +28,6 @@ final class LayerObject1 implements LayerObjectInterface
          * The raw cell data
          * @var list<int>
          */
-        private readonly array $data
+        private readonly array $data,
     ) {}
 }

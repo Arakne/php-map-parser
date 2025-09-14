@@ -8,7 +8,6 @@ use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Renderer\MapRendererInterface;
 use Closure;
 use GdImage;
-
 use InvalidArgumentException;
 
 use function assert;
@@ -198,7 +197,7 @@ final class TileRenderer
                 $mapCoordinate->xSourceOffset,
                 $mapCoordinate->ySourceOffset,
                 MapRenderer::DISPLAY_WIDTH,
-                MapRenderer::DISPLAY_HEIGHT
+                MapRenderer::DISPLAY_HEIGHT,
             );
         }
 

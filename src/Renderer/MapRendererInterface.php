@@ -2,7 +2,6 @@
 
 namespace Arakne\MapParser\Renderer;
 
-
 use Arakne\MapParser\Loader\Map;
 use GdImage;
 

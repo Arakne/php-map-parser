@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Arakne\MapParser\Parser;
 
 /**
@@ -21,7 +20,7 @@ final class GroundObject implements LayerObjectInterface
     }
 
     public bool $active {
-         get => $this->number !== 0;
+        get => $this->number !== 0;
     }
 
     /**

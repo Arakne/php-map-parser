@@ -35,7 +35,7 @@ final readonly class CellShape
      *
      * @return CellShape[]
      */
-    static public function fromMap(Map $map, bool $ignoreInactive = true): array
+    public static function fromMap(Map $map, bool $ignoreInactive = true): array
     {
         $shapes = [];
 
@@ -60,8 +60,8 @@ final readonly class CellShape
                 ++$_loc9;
             }
 
-            $x = (int)($_loc9 * MapRenderer::CELL_WIDTH + $_loc11);
-            $y = (int)($_loc10 * MapRenderer::CELL_HALF_HEIGHT - MapRenderer::LEVEL_HEIGHT * ($cell->ground->level - 7));
+            $x = (int) ($_loc9 * MapRenderer::CELL_WIDTH + $_loc11);
+            $y = (int) ($_loc10 * MapRenderer::CELL_HALF_HEIGHT - MapRenderer::LEVEL_HEIGHT * ($cell->ground->level - 7));
 
             if (!$ignoreInactive || $cell->active) {
                 $shapes[] = new CellShape($x, $y, $cell);

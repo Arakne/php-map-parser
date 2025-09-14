@@ -8,7 +8,6 @@ use Arakne\MapParser\Renderer\Layer\LayerObjectRenderer;
 use Arakne\MapParser\Renderer\Layer\LayerRendererInterface;
 use Arakne\MapParser\Sprite\SpriteRepositoryInterface;
 use GdImage;
-
 use Override;
 
 use function imagecreatetruecolor;
@@ -20,15 +19,15 @@ use function imagecreatetruecolor;
  */
 final readonly class MapRenderer implements MapRendererInterface
 {
-    const int DISPLAY_WIDTH = 742;
-    const int DISPLAY_HEIGHT = 432;
+    public const int DISPLAY_WIDTH = 742;
+    public const int DISPLAY_HEIGHT = 432;
 
-    const int CELL_WIDTH = 53;
-    const int CELL_HEIGHT = 27;
-    const float CELL_HALF_WIDTH = 2.650000E+001;
-    const float CELL_HALF_HEIGHT = 1.350000E+001;
+    public const int CELL_WIDTH = 53;
+    public const int CELL_HEIGHT = 27;
+    public const float CELL_HALF_WIDTH = 2.650000E+001;
+    public const float CELL_HALF_HEIGHT = 1.350000E+001;
 
-    const int LEVEL_HEIGHT = 20;
+    public const int LEVEL_HEIGHT = 20;
 
     public function __construct(
         private SpriteRepositoryInterface $grounds,
@@ -45,9 +44,9 @@ final readonly class MapRenderer implements MapRendererInterface
         /** @var LayerRendererInterface[] $layers */
         $layers = [
             new BackgroundLayerRenderer($this->grounds),
-            new LayerObjectRenderer($this->grounds, static fn (CellShape $cell) => $cell->data->ground),
-            new LayerObjectRenderer($this->objects, static fn (CellShape $cell) => $cell->data->layer1),
-            new LayerObjectRenderer($this->objects, static fn (CellShape $cell) => $cell->data->layer2),
+            new LayerObjectRenderer($this->grounds, static fn(CellShape $cell) => $cell->data->ground),
+            new LayerObjectRenderer($this->objects, static fn(CellShape $cell) => $cell->data->layer1),
+            new LayerObjectRenderer($this->objects, static fn(CellShape $cell) => $cell->data->layer2),
         ];
 
         foreach ($layers as $layer) {

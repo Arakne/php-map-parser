@@ -8,7 +8,6 @@ use Arakne\MapParser\Renderer\CellShape;
 use Arakne\MapParser\Sprite\SpriteRepositoryInterface;
 use Closure;
 use GdImage;
-
 use Override;
 
 use function imagecopy;

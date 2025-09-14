@@ -17,7 +17,7 @@ final class Base64
     private const array CHARSET = [
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
         't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
-        'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_'
+        'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_',
     ];
 
     /**
@@ -28,7 +28,7 @@ final class Base64
      * @return int
      * @psalm-api
      */
-    static public function ord(string $c): int
+    public static function ord(string $c): int
     {
         if ($c >= 'a' && $c <= 'z') {
             return ord($c) - ord('a');
@@ -57,7 +57,7 @@ final class Base64
      * @return string
      * @psalm-api
      */
-    static public function chr(int $value): string
+    public static function chr(int $value): string
     {
         return self::CHARSET[$value];
     }
@@ -71,7 +71,7 @@ final class Base64
      * @return string The encoded value
      * @psalm-api
      */
-    static public function encode(int $value, int $length): string
+    public static function encode(int $value, int $length): string
     {
         $encoded = str_repeat("\0", $length);
 
@@ -91,7 +91,7 @@ final class Base64
      * @return int
      * @psalm-api
      */
-    static public function decode(string $encoded): int
+    public static function decode(string $encoded): int
     {
         $value = 0;
         $len = strlen($encoded);
