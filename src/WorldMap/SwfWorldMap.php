@@ -2,42 +2,51 @@
 
 namespace Arakne\MapParser\WorldMap;
 
+use Arakne\MapParser\Renderer\MapRenderer;
+use Arakne\MapParser\Util\Bounds;
 use Arakne\Swf\Extractor\Drawer\Converter\Converter;
 use Arakne\Swf\Extractor\Sprite\SpriteDefinition;
 use Arakne\Swf\Extractor\SwfExtractor;
 use Arakne\Swf\SwfFile;
 use InvalidArgumentException;
+use Override;
 
+use function assert;
 use function explode;
-use function var_dump;
+use function fopen;
+use function imagepng;
+use function imagesavealpha;
+use function rewind;
+use function stream_get_contents;
 
-final class SwfWorldMap
+/**
+ * Implementation of WorldMapInterface using a SWF file as source
+ */
+final class SwfWorldMap implements WorldMapInterface
 {
-    public const int AREA_WIDTH = 600;
-    public const int AREA_HEIGHT = 345;
-
-    private ?array $bounds = null;
-
-    private array $cache = [];
+    private ?Bounds $bounds = null;
+    private SwfExtractor $extractor {
+        get => $this->extractor ??= new SwfExtractor($this->file);
+    }
 
     public function __construct(
         private readonly SwfFile $file,
+        private readonly Converter $converter = new Converter(),
     ) {}
 
-    public function bounds(): array
+    #[Override]
+    public function bounds(): Bounds
     {
         if ($this->bounds) {
             return $this->bounds;
         }
 
-        $bounds = [
-            'xMin' => 0,
-            'yMin' => 0,
-            'xMax' => 0,
-            'yMax' => 0,
-        ];
+        $xMin = 0;
+        $yMin = 0;
+        $xMax = 0;
+        $yMax = 0;
 
-        foreach (new SwfExtractor($this->file)->exported() as $name => $_) {
+        foreach ($this->extractor->exported() as $name => $_) {
             $parts = explode('_', $name, 2);
 
             if (count($parts) !== 2) {
@@ -47,36 +56,33 @@ final class SwfWorldMap
             $x = (int) $parts[0];
             $y = (int) $parts[1];
 
-            if ($x < $bounds['xMin']) {
-                $bounds['xMin'] = $x;
+            if ($x < $xMin) {
+                $xMin = $x;
             }
 
-            if ($x > $bounds['xMax']) {
-                $bounds['xMax'] = $x;
+            if ($x > $xMax) {
+                $xMax = $x;
             }
 
-            if ($y < $bounds['yMin']) {
-                $bounds['yMin'] = $y;
+            if ($y < $yMin) {
+                $yMin = $y;
             }
 
-            if ($y > $bounds['yMax']) {
-                $bounds['yMax'] = $y;
+            if ($y > $yMax) {
+                $yMax = $y;
             }
         }
 
-        return $this->bounds = $bounds;
+        return $this->bounds = new Bounds($xMin, $xMax, $yMin, $yMax);
     }
 
-    public function area(int $x, int $y): ?string
+    #[Override]
+    public function chunk(int $x, int $y): ?string
     {
         $name = $x . '_' . $y;
 
-        if (isset($this->cache[$name])) {
-            return $this->cache[$name];
-        }
-
         try {
-            $sprite = $this->file->assetByName($name);
+            $sprite = $this->extractor->byName($name);
         } catch (InvalidArgumentException) {
             return null;
         }
@@ -85,6 +91,25 @@ final class SwfWorldMap
             return null;
         }
 
-        return $this->cache[$name] = new Converter()->toPng($sprite);
+        $basePng = $this->converter->toPng($sprite);
+
+        $img = imagecreatefromstring($basePng);
+        assert($img !== false);
+        $img = imagescale($img, MapRenderer::DISPLAY_WIDTH, MapRenderer::DISPLAY_HEIGHT);
+        assert($img !== false);
+        imagesavealpha($img, true);
+
+        $out = fopen('php://memory', 'w+');
+        assert($out !== false);
+
+        imagepng($img, $out);
+
+        rewind($out);
+        $data = stream_get_contents($out);
+        assert($data !== false);
+
+        fclose($out);
+
+        return $data;
     }
 }

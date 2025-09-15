@@ -69,18 +69,10 @@ foreach ($areas as $area) {
     }
 }
 
-$worldmap = new SwfWorldMap(
-    new SwfFile(__DIR__.'/maps/3.swf')
-);
+$worldmap = new SwfWorldMap(new SwfFile(__DIR__.'/maps/3.swf'));
 
 $bounds = $worldmap->bounds();
-$worldMapRenderer = new WorldMapTileRenderer(
-    fn ($coordinates) => $worldmap->area($coordinates->x, $coordinates->y),
-    $bounds['xMin'],
-    $bounds['xMax'],
-    $bounds['yMin'],
-    $bounds['yMax'],
-);
+$worldMapRenderer = new WorldMapTileRenderer($worldmap);
 
 $tileRenderer = new TileRenderer(
     $mapRenderer,
@@ -113,10 +105,10 @@ $tileRenderer = new TileRenderer(
 
         return MapStructure::fromSwfFile(new SwfFile($mapFile), $map['key']);
     },
-    $bounds['xMin'] * 15,
-    ($bounds['xMax'] + 1) * 15 - 1,
-    $bounds['yMin'] * 15,
-    ($bounds['yMax'] + 1) * 15 - 1,
+    $bounds->xMin * 15,
+    ($bounds->xMax + 1) * 15 - 1,
+    $bounds->yMin * 15,
+    ($bounds->yMax + 1) * 15 - 1,
     scale: 16/15,
     cache: new FilesystemTileCache($cacheDir),
 );
@@ -131,17 +123,14 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
     $y = (int) $request->get('y', 0);
     $zoom = (int) $request->get('z', 0);
 
-    //$img = $worldMapRenderer->render($x, $y, $zoom);
-    $img = imagecreatetruecolor(256, 256);
-    $transparent = imagecolorallocatealpha($img, 0, 0, 0, 127);
-    imagefill($img, 0, 0, $transparent);
+    $img = $worldMapRenderer->render($x, $y, $zoom);
     imagealphablending($img, true);
     imagesavealpha($img, true);
 
-    //if ($zoom >= 6) {
+    if ($zoom >= 6) {
         $img2 = $tileRenderer->render($x, $y, $zoom);
         imagecopy($img, $img2, 0, 0, 0, 0, 256, 256);
-    //}
+    }
 
     ob_start();
     imagepng($img);

@@ -4,9 +4,8 @@ namespace Arakne\MapParser\WorldMap;
 
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Renderer\Tile\MapCoordinates;
-use Closure;
+use Arakne\MapParser\Util\Bounds;
 use GdImage;
-use Imagick;
 
 use function assert;
 use function ceil;
@@ -21,9 +20,14 @@ use function imagesavealpha;
 use function log;
 use function max;
 
+/**
+ * Render dofus world maps as square tiles compatible with leaflet or other tile-based map viewers.
+ */
 final class WorldMapTileRenderer
 {
     public const int TILE_SIZE = 256;
+
+    private readonly Bounds $bounds;
 
     /**
      * The size of a size of the complete map in tiles count
@@ -43,31 +47,9 @@ final class WorldMapTileRenderer
 
     public function __construct(
         /**
-         * Resolve the map from the [X,Y] coordinates
-         *
-         * @var Closure(MapCoordinates):(string|null)
+         * The world map to render
          */
-        private readonly Closure $mapResolver,
-
-        /**
-         * The minimal X coordinate of the map set
-         */
-        private readonly int $Xmin,
-
-        /**
-         * The maximal X coordinate of the map set
-         */
-        private readonly int $Xmax,
-
-        /**
-         * The minimal Y coordinate of the map set
-         */
-        private readonly int $Ymin,
-
-        /**
-         * The maximal Y coordinate of the map set
-         */
-        private readonly int $Ymax,
+        private readonly WorldMapInterface $worldMap,
 
         /**
          * The tile size in pixels (default: 256)
@@ -79,7 +61,8 @@ final class WorldMapTileRenderer
          */
         private readonly int $tileSize = self::TILE_SIZE,
     ) {
-        $this->size = self::computeSize($Xmin, $Xmax, $Ymin, $Ymax, $tileSize);
+        $this->bounds = $worldMap->bounds();
+        $this->size = self::computeSize($this->bounds->xMin, $this->bounds->xMax, $this->bounds->yMin, $this->bounds->yMax, $tileSize);
         // @phpstan-ignore assign.propertyType
         $this->maxZoom = (int) log($this->size, 2);
     }
@@ -95,33 +78,38 @@ final class WorldMapTileRenderer
      */
     public function toMapCoordinates(int $x, int $y): array
     {
+        $xMin = $this->bounds->xMin;
+        $xMax = $this->bounds->xMax;
+        $yMin = $this->bounds->yMin;
+        $yMax = $this->bounds->yMax;
+
         $mapX = (int) ($x * $this->tileSize / MapRenderer::DISPLAY_WIDTH);
         $mapY = (int) ($y * $this->tileSize / MapRenderer::DISPLAY_HEIGHT);
 
-        if ($mapX + $this->Xmin > $this->Xmax || $mapY + $this->Ymin > $this->Ymax) {
+        if ($mapX + $xMin > $xMax || $mapY + $yMin > $yMax) {
             return [];
         }
 
         $Xoffset = ($x * $this->tileSize) - ($mapX * MapRenderer::DISPLAY_WIDTH);
         $Yoffset = ($y * $this->tileSize) - ($mapY * MapRenderer::DISPLAY_HEIGHT);
 
-        $map = new MapCoordinates($mapX + $this->Xmin, $mapY + $this->Ymin, $Xoffset, $Yoffset);
+        $map = new MapCoordinates($mapX + $xMin, $mapY + $yMin, $Xoffset, $Yoffset);
 
         $maps = [$map];
 
-        $hasX = ($x + 1) * $this->tileSize > ($mapX + 1) * MapRenderer::DISPLAY_WIDTH && $mapX + $this->Xmin < $this->Xmax;
-        $hasY = ($y + 1) * $this->tileSize > ($mapY + 1) * MapRenderer::DISPLAY_HEIGHT && $mapY + $this->Ymin < $this->Ymax;
+        $hasX = ($x + 1) * $this->tileSize > ($mapX + 1) * MapRenderer::DISPLAY_WIDTH && $mapX + $xMin < $xMax;
+        $hasY = ($y + 1) * $this->tileSize > ($mapY + 1) * MapRenderer::DISPLAY_HEIGHT && $mapY + $yMin < $yMax;
 
         if ($hasX) {
-            $maps[] = new MapCoordinates($mapX + $this->Xmin + 1, $mapY + $this->Ymin, 0, $Yoffset, MapRenderer::DISPLAY_WIDTH - $Xoffset, 0);
+            $maps[] = new MapCoordinates($mapX + $xMin + 1, $mapY + $yMin, 0, $Yoffset, MapRenderer::DISPLAY_WIDTH - $Xoffset, 0);
         }
 
         if ($hasY) {
-            $maps[] = new MapCoordinates($mapX + $this->Xmin, $mapY + $this->Ymin + 1, $Xoffset, 0, 0, MapRenderer::DISPLAY_HEIGHT - $Yoffset);
+            $maps[] = new MapCoordinates($mapX + $xMin, $mapY + $yMin + 1, $Xoffset, 0, 0, MapRenderer::DISPLAY_HEIGHT - $Yoffset);
         }
 
         if ($hasX && $hasY) {
-            $maps[] = new MapCoordinates($mapX + $this->Xmin + 1, $mapY + $this->Ymin + 1, 0, 0, MapRenderer::DISPLAY_WIDTH - $Xoffset, MapRenderer::DISPLAY_HEIGHT - $Yoffset);
+            $maps[] = new MapCoordinates($mapX + $xMin + 1, $mapY + $yMin + 1, 0, 0, MapRenderer::DISPLAY_WIDTH - $Xoffset, MapRenderer::DISPLAY_HEIGHT - $Yoffset);
         }
 
         return $maps;
@@ -154,7 +142,9 @@ final class WorldMapTileRenderer
         $startY = (int) ($y * $tileCount);
 
         $img = imagecreatetruecolor($this->tileSize, $this->tileSize);
+        assert($img !== false);
         $transparent = imagecolorallocatealpha($img, 0, 0, 0, 127);
+        assert($transparent !== false);
         imagealphablending($img, false);
         imagesavealpha($img, true);
         imagefill($img, 0, 0, $transparent);
@@ -177,6 +167,8 @@ final class WorldMapTileRenderer
 
         $tileX = (int) ($x / $factor);
         $tileY = (int) ($y / $factor);
+
+        assert($tileX >= 0 && $tileY >= 0);
 
         $img = imagecreatetruecolor($this->tileSize, $this->tileSize);
         imagealphablending($img, false);
@@ -211,7 +203,9 @@ final class WorldMapTileRenderer
     public function renderOriginalSize(int $x, int $y): GdImage
     {
         $img = imagecreatetruecolor($this->tileSize, $this->tileSize);
+        assert($img !== false);
         $transparent = imagecolorallocatealpha($img, 0, 0, 0, 127);
+        assert($transparent !== false);
         imagealphablending($img, false);
         imagesavealpha($img, true);
         imagefill($img, 0, 0, $transparent);
@@ -238,17 +232,14 @@ final class WorldMapTileRenderer
 
     private function renderMap(MapCoordinates $coordinates): ?GdImage
     {
-        if (!$map = ($this->mapResolver)($coordinates)) {
+        if (!$map = $this->worldMap->chunk($coordinates->x, $coordinates->y)) {
             return null;
         }
 
-        // GD doesn't supports partial transparency well, so we use Imagick to resize the image
-        $im = new Imagick();
-        $im->readImageBlob($map);
-        $im->setImageFormat('png32');
-        $im->resizeImage(MapRenderer::DISPLAY_WIDTH, MapRenderer::DISPLAY_HEIGHT, Imagick::FILTER_LANCZOS, 1);
+        $img = imagecreatefromstring($map);
+        assert($img !== false);
 
-        return imagecreatefromstring($im->getImagesBlob());
+        return $img;
     }
 
     /**
