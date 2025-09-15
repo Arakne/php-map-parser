@@ -5,6 +5,7 @@ namespace Renderer\Tile;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Renderer\MapRendererInterface;
+use Arakne\MapParser\Renderer\Tile\FilesystemTileCache;
 use Arakne\MapParser\Renderer\Tile\MapCoordinates;
 use Arakne\MapParser\Renderer\Tile\TileRenderer;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
@@ -22,6 +23,7 @@ use function glob;
 use function imagepng;
 use function max;
 use function min;
+use function tempnam;
 use function unlink;
 
 class TileRendererTest extends TestCase
@@ -278,7 +280,7 @@ class TileRendererTest extends TestCase
             max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
         );
 
-        for ($zoom = 0; $zoom <= $renderer->maxZoom; $zoom++) {
+        for ($zoom = 0; $zoom <= 8; $zoom++) {
             $img = $renderer->render(0, 0, $zoom);
             imagepng($img, $path = __DIR__ . '/_files/actual_' . $zoom . '.png');
             $this->assertImages(__DIR__ . '/_files/zoom_' . $zoom . '.png', $path);
@@ -287,10 +289,46 @@ class TileRendererTest extends TestCase
     }
 
     #[Test]
-    public function render_invalid_zoom()
+    public function render_with_scale()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $mapRenderer = new MapRenderer(
+            new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+            new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+        );
 
+        foreach ([1.1, 1.3, 1.5] as $scale) {
+            $renderer = new TileRenderer(
+                $mapRenderer,
+                function (MapCoordinates $coords) {
+                    if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
+                        return null;
+                    }
+
+                    return MapStructure::fromSwfFile(
+                        new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
+                        file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                    );
+                },
+                min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+                scale: $scale,
+            );
+
+            $img = $renderer->render(1, 1, 2);
+            imagepng($img, $path = __DIR__ . '/_files/actual_scale_' . $scale . '.png');
+            $this->assertImages(
+                __DIR__ . '/_files/scale_' . $scale . '.png',
+                $path
+            );
+            unlink($path);
+        }
+    }
+
+    #[Test]
+    public function functional_with_filesystem_cache()
+    {
         $renderer = new TileRenderer(
             new MapRenderer(
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
@@ -310,8 +348,27 @@ class TileRendererTest extends TestCase
             max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
             min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
             max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            cache: new FilesystemTileCache($path = '/tmp/' . bin2hex(random_bytes(5))),
         );
 
-        $renderer->render(0, 0, 50);
+        $img = $renderer->render(1, 1, 2);
+        imagepng($img, $actual = tempnam('/tmp', 'tile_'));
+
+        $this->assertImages($actual, $path . '/zoom/2/1_1.png');
+        $this->assertEqualsCanonicalizing([
+            $path . '/tiles/2_2.png',
+            $path . '/tiles/2_3.png',
+            $path . '/tiles/3_2.png',
+            $path . '/tiles/3_3.png',
+        ], glob($path . '/tiles/*.png'));
+        $this->assertEqualsCanonicalizing([
+            $path . '/maps/10333.png',
+            $path . '/maps/10334.png',
+        ], glob($path . '/maps/*.png'));
+
+        $cached = $renderer->render(1, 1, 2);
+        imagepng($cached, $cachedPath = tempnam('/tmp', 'tile_'));
+
+        $this->assertImages($actual, $cachedPath);
     }
 }
