@@ -1,8 +1,8 @@
 <?php
 
-namespace Arakne\MapParser\Renderer\Tile;
+namespace Arakne\MapParser\Tile\Cache;
 
-use Arakne\MapParser\Loader\MapStructure;
+use Arakne\MapParser\Tile\MapCoordinates;
 use Closure;
 use GdImage;
 use Override;
@@ -14,9 +14,9 @@ use Override;
 final readonly class NullTileCache implements TileCacheInterface
 {
     #[Override]
-    public function map(MapStructure $map, Closure $compute): GdImage
+    public function map(MapCoordinates $coordinates, Closure $compute): ?GdImage
     {
-        return $compute($map);
+        return $compute($coordinates);
     }
 
     #[Override]

@@ -1,11 +1,11 @@
 <?php
 
-namespace Arakne\MapParser\Renderer\Tile;
+namespace Arakne\MapParser\Tile;
 
-use Arakne\MapParser\Loader\MapLoader;
-use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\MapRenderer;
-use Arakne\MapParser\Renderer\MapRendererInterface;
+use Arakne\MapParser\Tile\Cache\NullTileCache;
+use Arakne\MapParser\Tile\Cache\TileCacheInterface;
+use Arakne\MapParser\Util\Bounds;
 use Closure;
 use GdImage;
 
@@ -23,11 +23,9 @@ use function log;
 use function max;
 
 /**
- * Render dofus maps as square tiles compatible with leaflet or other tile-based map viewers.
- *
- * @psalm-api
+ * Render square tiles compatible with leaflet or other tile-based map viewers from rectangular map sets.
  */
-final class TileRenderer
+class BaseTileRenderer
 {
     public const int TILE_SIZE = 256;
 
@@ -48,34 +46,21 @@ final class TileRenderer
     public readonly int $maxZoom;
 
     public function __construct(
-        private readonly MapRendererInterface $renderer,
-
         /**
          * Resolve the map from the [X,Y] coordinates
+         * and render it to a GD image
          *
-         * @var Closure(MapCoordinates):(MapStructure|null)
+         * Note: the map should have alpha channel enabled for proper rendering,
+         *       so you should call `imagesavealpha($img, true)` before returning the image.
+         *
+         * @var Closure(MapCoordinates):(GdImage|null)
          */
-        private readonly Closure $mapResolver,
+        private readonly Closure $mapRenderer,
 
         /**
-         * The minimal X coordinate of the map set
+         * The world map coordinates bounds
          */
-        private readonly int $Xmin,
-
-        /**
-         * The maximal X coordinate of the map set
-         */
-        private readonly int $Xmax,
-
-        /**
-         * The minimal Y coordinate of the map set
-         */
-        private readonly int $Ymin,
-
-        /**
-         * The maximal Y coordinate of the map set
-         */
-        private readonly int $Ymax,
+        private readonly Bounds $bounds,
 
         /**
          * The scale to apply to each map (default: 1.0)
@@ -92,6 +77,20 @@ final class TileRenderer
         private readonly float $scale = 1.0,
 
         /**
+         * The width in pixel of each rendered map
+         *
+         * @var positive-int
+         */
+        private readonly int $mapWidth = MapRenderer::DISPLAY_WIDTH,
+
+        /**
+         * The height in pixel of each rendered map
+         *
+         * @var positive-int
+         */
+        private readonly int $mapHeight = MapRenderer::DISPLAY_HEIGHT,
+
+        /**
          * The tile size in pixels (default: 256)
          * This value should be a power of 2, so it can be evenly divided at each zoom level
          *
@@ -106,7 +105,7 @@ final class TileRenderer
          */
         private readonly TileCacheInterface $cache = new NullTileCache(),
     ) {
-        $this->size = self::computeSize($Xmin, $Xmax, $Ymin, $Ymax, $tileSize, $scale);
+        $this->size = self::computeSize($bounds, $tileSize, $mapWidth, $mapHeight, $scale);
         // @phpstan-ignore assign.propertyType
         $this->maxZoom = (int) log($this->size, 2);
     }
@@ -120,38 +119,43 @@ final class TileRenderer
      *
      * @return MapCoordinates[]
      */
-    public function toMapCoordinates(int $x, int $y): array
+    final public function toMapCoordinates(int $x, int $y): array
     {
-        $scaledWidth = MapRenderer::DISPLAY_WIDTH * $this->scale;
-        $scaledHeight = MapRenderer::DISPLAY_HEIGHT * $this->scale;
+        $xMin = $this->bounds->xMin;
+        $xMax = $this->bounds->xMax;
+        $yMin = $this->bounds->yMin;
+        $yMax = $this->bounds->yMax;
+
+        $scaledWidth = $this->mapWidth * $this->scale;
+        $scaledHeight = $this->mapHeight * $this->scale;
 
         $mapX = (int) ($x * $this->tileSize / $scaledWidth);
         $mapY = (int) ($y * $this->tileSize / $scaledHeight);
 
-        if ($mapX + $this->Xmin > $this->Xmax || $mapY + $this->Ymin > $this->Ymax) {
+        if ($mapX + $xMin > $xMax || $mapY + $yMin > $yMax) {
             return [];
         }
 
         $Xoffset = (int) (($x * $this->tileSize) - ($mapX * $scaledWidth));
         $Yoffset = (int) (($y * $this->tileSize) - ($mapY * $scaledHeight));
 
-        $map = new MapCoordinates($mapX + $this->Xmin, $mapY + $this->Ymin, $Xoffset, $Yoffset);
+        $map = new MapCoordinates($mapX + $xMin, $mapY + $yMin, $Xoffset, $Yoffset);
 
         $maps = [$map];
 
-        $hasX = ($x + 1) * $this->tileSize > ($mapX + 1) * $scaledWidth && $mapX + $this->Xmin < $this->Xmax;
-        $hasY = ($y + 1) * $this->tileSize > ($mapY + 1) * $scaledHeight && $mapY + $this->Ymin < $this->Ymax;
+        $hasX = ($x + 1) * $this->tileSize > ($mapX + 1) * $scaledWidth && $mapX + $xMin < $xMax;
+        $hasY = ($y + 1) * $this->tileSize > ($mapY + 1) * $scaledHeight && $mapY + $yMin < $yMax;
 
         if ($hasX) {
-            $maps[] = new MapCoordinates($mapX + $this->Xmin + 1, $mapY + $this->Ymin, 0, $Yoffset, (int) ($scaledWidth - $Xoffset), 0);
+            $maps[] = new MapCoordinates($mapX + $xMin + 1, $mapY + $yMin, 0, $Yoffset, (int) ($scaledWidth - $Xoffset), 0);
         }
 
         if ($hasY) {
-            $maps[] = new MapCoordinates($mapX + $this->Xmin, $mapY + $this->Ymin + 1, $Xoffset, 0, 0, (int) ($scaledHeight - $Yoffset));
+            $maps[] = new MapCoordinates($mapX + $xMin, $mapY + $yMin + 1, $Xoffset, 0, 0, (int) ($scaledHeight - $Yoffset));
         }
 
         if ($hasX && $hasY) {
-            $maps[] = new MapCoordinates($mapX + $this->Xmin + 1, $mapY + $this->Ymin + 1, 0, 0, (int) ($scaledWidth - $Xoffset), (int) ($scaledHeight - $Yoffset));
+            $maps[] = new MapCoordinates($mapX + $xMin + 1, $mapY + $yMin + 1, 0, 0, (int) ($scaledWidth - $Xoffset), (int) ($scaledHeight - $Yoffset));
         }
 
         return $maps;
@@ -167,7 +171,7 @@ final class TileRenderer
      *
      * @return GdImage
      */
-    public function render(int $x, int $y, int $zoom = 0): GdImage
+    final public function render(int $x, int $y, int $zoom = 0): GdImage
     {
         if ($zoom > $this->maxZoom) {
             return $this->cache->tile($x, $y, $zoom, $this->renderUpscaled(...));
@@ -189,7 +193,7 @@ final class TileRenderer
      *
      * @return GdImage
      */
-    public function renderOriginalSize(int $x, int $y): GdImage
+    final public function renderOriginalSize(int $x, int $y): GdImage
     {
         return $this->cache->fullSizeTile($x, $y, $this->doRenderOriginalSize(...));
     }
@@ -261,26 +265,18 @@ final class TileRenderer
 
     private function renderMap(MapCoordinates $coordinates): ?GdImage
     {
-        if (!$map = ($this->mapResolver)($coordinates)) {
+        $img = $this->cache->map($coordinates, $this->mapRenderer);
+
+        if (!$img) {
             return null;
         }
 
-        $img = $this->cache->map($map, $this->doRenderMap(...));
-
         if ($this->scale !== 1.0) {
-            $img = imagescale($img, (int) (MapRenderer::DISPLAY_WIDTH * $this->scale), (int) (MapRenderer::DISPLAY_HEIGHT * $this->scale));
+            $img = imagescale($img, (int) ($this->mapWidth * $this->scale), (int) ($this->mapHeight * $this->scale));
             assert($img !== false);
         }
 
         return $img;
-    }
-
-    private function doRenderMap(MapStructure $map): GdImage
-    {
-        $mapLoader = new MapLoader(); // @todo inject in constructor
-        $map = $mapLoader->load($map);
-
-        return $this->renderer->render($map);
     }
 
     /**
@@ -289,7 +285,7 @@ final class TileRenderer
      *
      * @return GdImage
      */
-    public function doRenderOriginalSize(int $x, int $y): GdImage
+    private function doRenderOriginalSize(int $x, int $y): GdImage
     {
         $img = $this->emptyTile();
 
@@ -305,8 +301,8 @@ final class TileRenderer
                 $mapCoordinate->yDestinationOffset,
                 $mapCoordinate->xSourceOffset,
                 $mapCoordinate->ySourceOffset,
-                (int) (MapRenderer::DISPLAY_WIDTH * $this->scale) - $mapCoordinate->xSourceOffset,
-                (int) (MapRenderer::DISPLAY_HEIGHT * $this->scale) - $mapCoordinate->ySourceOffset,
+                (int) ($this->mapWidth * $this->scale) - $mapCoordinate->xSourceOffset,
+                (int) ($this->mapHeight * $this->scale) - $mapCoordinate->ySourceOffset,
             );
         }
 
@@ -327,19 +323,18 @@ final class TileRenderer
     }
 
     /**
-     * @param int $xMin
-     * @param int $xMax
-     * @param int $yMin
-     * @param int $yMax
+     * @param Bounds $bounds
      * @param positive-int $tileSize
+     * @param positive-int $mapWidth
+     * @param positive-int $mapHeight
      * @param float $scale
      *
      * @return positive-int
      */
-    private static function computeSize(int $xMin, int $xMax, int $yMin, int $yMax, int $tileSize, float $scale): int
+    private static function computeSize(Bounds $bounds, int $tileSize, int $mapWidth, int $mapHeight, float $scale): int
     {
-        $realWidth = ($xMax - $xMin + 1) * MapRenderer::DISPLAY_WIDTH * $scale;
-        $realHeight = ($yMax - $yMin + 1) * MapRenderer::DISPLAY_HEIGHT * $scale;
+        $realWidth = ($bounds->xMax - $bounds->xMin + 1) * $mapWidth * $scale;
+        $realHeight = ($bounds->yMax - $bounds->yMin + 1) * $mapHeight * $scale;
 
         $size = max($realWidth, $realHeight);
         $tileCount = $size / $tileSize;

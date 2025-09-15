@@ -5,10 +5,10 @@ set_time_limit(-1);
 use Arakne\MapParser\Loader\MapLoader;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\MapRenderer;
-use Arakne\MapParser\Renderer\Tile\FilesystemTileCache;
-use Arakne\MapParser\Renderer\Tile\MapCoordinates;
-use Arakne\MapParser\Renderer\Tile\TileRenderer;
+use Arakne\MapParser\Renderer\TileRenderer;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
+use Arakne\MapParser\Tile\Cache\FilesystemTileCache;
+use Arakne\MapParser\Tile\MapCoordinates;
 use Arakne\MapParser\WorldMap\SwfWorldMap;
 use Arakne\MapParser\WorldMap\WorldMapTileRenderer;
 use Arakne\Swf\SwfFile;
@@ -72,7 +72,10 @@ foreach ($areas as $area) {
 $worldmap = new SwfWorldMap(new SwfFile(__DIR__.'/maps/3.swf'));
 
 $bounds = $worldmap->bounds();
-$worldMapRenderer = new WorldMapTileRenderer($worldmap);
+$worldMapRenderer = new WorldMapTileRenderer(
+    $worldmap,
+    cache: new FilesystemTileCache($cacheDir . '/worldmap'),
+);
 
 $tileRenderer = new TileRenderer(
     $mapRenderer,
@@ -105,10 +108,7 @@ $tileRenderer = new TileRenderer(
 
         return MapStructure::fromSwfFile(new SwfFile($mapFile), $map['key']);
     },
-    $bounds->xMin * 15,
-    ($bounds->xMax + 1) * 15 - 1,
-    $bounds->yMin * 15,
-    ($bounds->yMax + 1) * 15 - 1,
+    $bounds->toActualMapBound(),
     scale: 16/15,
     cache: new FilesystemTileCache($cacheDir),
 );

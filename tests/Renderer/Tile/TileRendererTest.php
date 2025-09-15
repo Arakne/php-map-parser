@@ -5,13 +5,13 @@ namespace Renderer\Tile;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Renderer\MapRendererInterface;
-use Arakne\MapParser\Renderer\Tile\FilesystemTileCache;
-use Arakne\MapParser\Renderer\Tile\MapCoordinates;
-use Arakne\MapParser\Renderer\Tile\TileRenderer;
+use Arakne\MapParser\Renderer\TileRenderer;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
+use Arakne\MapParser\Tile\Cache\FilesystemTileCache;
+use Arakne\MapParser\Tile\MapCoordinates;
+use Arakne\MapParser\Util\Bounds;
 use Arakne\Swf\SwfFile;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -43,10 +43,12 @@ class TileRendererTest extends TestCase
         $renderer = new TileRenderer(
             $this->createMock(MapRendererInterface::class),
             fn ($coords) => null,
-            Xmin: -10,
-            Xmax: 0,
-            Ymin: 5,
-            Ymax: 10,
+            new Bounds(
+                xMin: -10,
+                xMax: 0,
+                yMin: 5,
+                yMax: 10,
+            ),
         );
 
         $this->assertEquals([
@@ -204,10 +206,12 @@ class TileRendererTest extends TestCase
                     file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
                 );
             },
-            min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
-            max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
-            min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
-            max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            new Bounds(
+                min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            ),
         );
 
         for ($x = 0; $x < 6; $x++) {
@@ -238,10 +242,12 @@ class TileRendererTest extends TestCase
                     file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
                 );
             },
-            min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
-            max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
-            min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
-            max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            new Bounds(
+                min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            ),
         );
 
         $this->assertSame(3, $renderer->maxZoom);
@@ -274,10 +280,12 @@ class TileRendererTest extends TestCase
                     file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
                 );
             },
-            min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
-            max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
-            min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
-            max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            new Bounds(
+                min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            ),
         );
 
         for ($zoom = 0; $zoom <= 8; $zoom++) {
@@ -309,10 +317,12 @@ class TileRendererTest extends TestCase
                         file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
                     );
                 },
-                min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
-                max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
-                min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
-                max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+                new Bounds(
+                    min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                    max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                    min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+                    max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+                ),
                 scale: $scale,
             );
 
@@ -344,10 +354,12 @@ class TileRendererTest extends TestCase
                     file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
                 );
             },
-            min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
-            max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
-            min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
-            max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            new Bounds(
+                min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            ),
             cache: new FilesystemTileCache($path = '/tmp/' . bin2hex(random_bytes(5))),
         );
 
@@ -362,8 +374,8 @@ class TileRendererTest extends TestCase
             $path . '/tiles/3_3.png',
         ], glob($path . '/tiles/*.png'));
         $this->assertEqualsCanonicalizing([
-            $path . '/maps/10333.png',
-            $path . '/maps/10334.png',
+            $path . '/maps/4_5.png',
+            $path . '/maps/5_5.png',
         ], glob($path . '/maps/*.png'));
 
         $cached = $renderer->render(1, 1, 2);

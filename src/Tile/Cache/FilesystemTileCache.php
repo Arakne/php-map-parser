@@ -1,8 +1,8 @@
 <?php
 
-namespace Arakne\MapParser\Renderer\Tile;
+namespace Arakne\MapParser\Tile\Cache;
 
-use Arakne\MapParser\Loader\MapStructure;
+use Arakne\MapParser\Tile\MapCoordinates;
 use Closure;
 use GdImage;
 use Override;
@@ -28,15 +28,15 @@ final readonly class FilesystemTileCache implements TileCacheInterface
     ) {}
 
     #[Override]
-    public function map(MapStructure $map, Closure $compute): GdImage
+    public function map(MapCoordinates $coordinates, Closure $compute): ?GdImage
     {
-        $path = 'maps/' . $map->id;
+        $path = 'maps/' . $coordinates->x . '_' . $coordinates->y;
 
         if ($gd = $this->readFromCache($path)) {
             return $gd;
         }
 
-        $gd = $compute($map);
+        $gd = $compute($coordinates);
         $this->writeToCache($path, $gd);
 
         return $gd;
@@ -85,8 +85,12 @@ final readonly class FilesystemTileCache implements TileCacheInterface
         return null;
     }
 
-    private function writeToCache(string $path, GdImage $gd): void
+    private function writeToCache(string $path, ?GdImage $gd): void
     {
+        if (!$gd) {
+            return;
+        }
+
         $path = $this->path . '/' . $path . '.png';
         $dir = dirname($path);
 

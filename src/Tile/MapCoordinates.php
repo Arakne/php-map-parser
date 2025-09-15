@@ -1,6 +1,6 @@
 <?php
 
-namespace Arakne\MapParser\Renderer\Tile;
+namespace Arakne\MapParser\Tile;
 
 final class MapCoordinates
 {
