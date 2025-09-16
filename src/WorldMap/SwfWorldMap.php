@@ -16,6 +16,7 @@ use function explode;
 use function fopen;
 use function imagepng;
 use function imagesavealpha;
+use function is_numeric;
 use function rewind;
 use function stream_get_contents;
 
@@ -49,7 +50,7 @@ final class SwfWorldMap implements WorldMapInterface
         foreach ($this->extractor->exported() as $name => $_) {
             $parts = explode('_', $name, 2);
 
-            if (count($parts) !== 2) {
+            if (count($parts) !== 2 || !is_numeric($parts[0]) || !is_numeric($parts[1])) {
                 continue;
             }
 

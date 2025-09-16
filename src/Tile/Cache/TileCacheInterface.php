@@ -43,4 +43,14 @@ interface TileCacheInterface
      * @return GdImage
      */
     public function tile(int $x, int $y, int $zoom, Closure $compute): GdImage;
+
+    /**
+     * Create a new instance with the given namespace for caching
+     * This allows to separate caches for different map sets / tile renderers, while using the same cache backend.
+     *
+     * @param string $namespace The namespace key
+     *
+     * @return static The new cache instance
+     */
+    public function withNamespace(string $namespace): static;
 }

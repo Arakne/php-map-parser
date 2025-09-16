@@ -41,6 +41,7 @@ final class TileRenderer extends BaseTileRenderer
         float $scale = 1.0,
         int $tileSize = self::TILE_SIZE,
         TileCacheInterface $cache = new NullTileCache(),
+        private readonly MapLoader $loader = new MapLoader(),
     ) {
         parent::__construct(
             $this->doRenderMap(...),
@@ -59,8 +60,7 @@ final class TileRenderer extends BaseTileRenderer
             return null;
         }
 
-        $mapLoader = new MapLoader(); // @todo inject in constructor
-        $map = $mapLoader->load($map);
+        $map = $this->loader->load($map);
 
         return $this->renderer->render($map);
     }

@@ -25,7 +25,7 @@ use function max;
 /**
  * Render square tiles compatible with leaflet or other tile-based map viewers from rectangular map sets.
  */
-class BaseTileRenderer
+class BaseTileRenderer implements TileRendererInterface
 {
     public const int TILE_SIZE = 256;
 

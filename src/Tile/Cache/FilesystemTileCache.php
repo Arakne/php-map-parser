@@ -72,6 +72,12 @@ final readonly class FilesystemTileCache implements TileCacheInterface
         return $gd;
     }
 
+    #[Override]
+    public function withNamespace(string $namespace): static
+    {
+        return new self($this->path . '/' . $namespace);
+    }
+
     private function readFromCache(string $path): ?GdImage
     {
         $path = $this->path . '/' . $path . '.png';

@@ -30,4 +30,10 @@ final readonly class NullTileCache implements TileCacheInterface
     {
         return $compute($x, $y, $zoom);
     }
+
+    #[Override]
+    public function withNamespace(string $namespace): static
+    {
+        return $this;
+    }
 }
