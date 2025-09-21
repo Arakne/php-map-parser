@@ -97,21 +97,21 @@ final class SwfWorldMap implements WorldMapInterface
 
         $basePng = $this->converter->toPng($sprite);
 
-        $img = imagecreatefromstring($basePng);
-        assert($img !== false);
-        imagesavealpha($img, true);
+        $baseImage = imagecreatefromstring($basePng);
+        assert($baseImage !== false);
+        imagesavealpha($baseImage, true);
 
-        $img = imagecreatetruecolor(MapRenderer::DISPLAY_WIDTH, MapRenderer::DISPLAY_HEIGHT);
-        assert($img !== false);
-        imagealphablending($img, false);
-        imagesavealpha($img, true);
+        $resized = imagecreatetruecolor(MapRenderer::DISPLAY_WIDTH, MapRenderer::DISPLAY_HEIGHT);
+        assert($resized !== false);
+        imagealphablending($resized, false);
+        imagesavealpha($resized, true);
         // Old GD version doesn't support well transparency on imagescale, so we use imagecopyresampled instead
-        imagecopyresampled($img, imagecreatefromstring($basePng), 0, 0, 0, 0, MapRenderer::DISPLAY_WIDTH, MapRenderer::DISPLAY_HEIGHT, imagesx(imagecreatefromstring($basePng)), imagesy(imagecreatefromstring($basePng)));
+        imagecopyresampled($resized, $baseImage, 0, 0, 0, 0, MapRenderer::DISPLAY_WIDTH, MapRenderer::DISPLAY_HEIGHT, imagesx($baseImage), imagesy($baseImage));
 
         $out = fopen('php://memory', 'w+');
         assert($out !== false);
 
-        imagepng($img, $out);
+        imagepng($resized, $out);
 
         rewind($out);
         $data = stream_get_contents($out);
