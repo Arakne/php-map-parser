@@ -29,7 +29,7 @@ final readonly class Bounds
         public int $yMin,
         public int $yMax,
     ) {
-        assert($xMin >= $xMax && $yMin >= $yMax);
+        assert($xMin <= $xMax && $yMin <= $yMax);
     }
 
     public function inBBox(BBox $bbox, int $zoom): self

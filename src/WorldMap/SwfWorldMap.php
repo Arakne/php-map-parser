@@ -14,6 +14,9 @@ use Override;
 use function assert;
 use function explode;
 use function fopen;
+use function imagealphablending;
+use function imagecopyresampled;
+use function imagecreatetruecolor;
 use function imagepng;
 use function imagesavealpha;
 use function is_numeric;
@@ -96,9 +99,14 @@ final class SwfWorldMap implements WorldMapInterface
 
         $img = imagecreatefromstring($basePng);
         assert($img !== false);
-        $img = imagescale($img, MapRenderer::DISPLAY_WIDTH, MapRenderer::DISPLAY_HEIGHT);
-        assert($img !== false);
         imagesavealpha($img, true);
+
+        $img = imagecreatetruecolor(MapRenderer::DISPLAY_WIDTH, MapRenderer::DISPLAY_HEIGHT);
+        assert($img !== false);
+        imagealphablending($img, false);
+        imagesavealpha($img, true);
+        // Old GD version doesn't support well transparency on imagescale, so we use imagecopyresampled instead
+        imagecopyresampled($img, imagecreatefromstring($basePng), 0, 0, 0, 0, MapRenderer::DISPLAY_WIDTH, MapRenderer::DISPLAY_HEIGHT, imagesx(imagecreatefromstring($basePng)), imagesy(imagecreatefromstring($basePng)));
 
         $out = fopen('php://memory', 'w+');
         assert($out !== false);
