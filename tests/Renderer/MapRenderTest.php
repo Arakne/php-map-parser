@@ -4,16 +4,21 @@
 namespace Arakne\MapParser\Renderer;
 
 use Arakne\MapParser\Loader\Map;
+use Arakne\MapParser\Loader\MapLoader;
+use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Parser\CellDataParser;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
 use Arakne\MapParser\Util\XorCipher;
+use Arakne\Swf\SwfFile;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function file_get_contents;
 use function imagepng;
 use function imagesx;
+use function imagesy;
+use function unlink;
 
 /**
  * Class MapRenderTest
@@ -64,6 +69,44 @@ class MapRenderTest extends TestCase
         $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
 
         $this->assertImages(__DIR__.'/_files/10302.png', __DIR__.'/_files/render.png');
+        unlink(__DIR__.'/_files/render.png');
+    }
+
+    #[Test]
+    public function renderBiggerDimensions()
+    {
+        $map = new MapLoader()->load(MapStructure::fromSwfFile(
+            new SwfFile(__DIR__ .'/../_files/4208_0706131721X.swf'),
+            file_get_contents(__DIR__ .'/../_files/4208.key'),
+        ));
+
+        $img = $this->renderer->render($map);
+
+        imagepng($img, __DIR__.'/_files/render.png');
+
+        $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
+        $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
+
+        $this->assertImages(__DIR__.'/_files/4208.png', __DIR__.'/_files/render.png');
+        unlink(__DIR__.'/_files/render.png');
+    }
+
+    #[Test]
+    public function renderSmallerDimensions()
+    {
+        $map = new MapLoader()->load(MapStructure::fromSwfFile(
+            new SwfFile(__DIR__ .'/../_files/703_0706131721X.swf'),
+            file_get_contents(__DIR__ .'/../_files/703.key'),
+        ));
+
+        $img = $this->renderer->render($map);
+
+        imagepng($img, __DIR__.'/_files/render.png');
+
+        $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
+        $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
+
+        $this->assertImages(__DIR__.'/_files/703.png', __DIR__.'/_files/render.png');
         unlink(__DIR__.'/_files/render.png');
     }
 }

@@ -2,6 +2,8 @@
 
 namespace Arakne\MapParser\Tile;
 
+use Arakne\MapParser\Util\Bounds;
+use Closure;
 use GdImage;
 
 /**
@@ -16,6 +18,21 @@ interface TileRendererInterface
      * @var non-negative-int
      */
     public int $maxZoom { get; }
+
+    /**
+     * Bounds of the map coordinates
+     */
+    public Bounds $bounds { get; }
+
+    /**
+     * Warmup the tile cache by pre-rendering all tiles up to the given maximum zoom level
+     *
+     * @param Closure(string, non-negative-int, positive-int):void|null $log A logging function receiving the built level, current tile number, and total tiles to build
+     * @param non-negative-int $minZoom The minimum zoom level to render (default: 0)
+     *
+     * @return void
+     */
+    public function warmup(?Closure $log = null, int $minZoom = 0): void;
 
     /**
      * Render a single tile at the given [X,Y] coordinates

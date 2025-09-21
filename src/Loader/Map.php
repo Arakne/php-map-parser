@@ -15,12 +15,12 @@ final readonly class Map
         public int $id,
 
         /**
-         * @var non-negative-int
+         * @var int<2, max>
          */
         public int $width,
 
         /**
-         * @var non-negative-int
+         * @var int<2, max>
          */
         public int $height,
 

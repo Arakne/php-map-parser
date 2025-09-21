@@ -19,12 +19,12 @@ final readonly class MapStructure
         public int $id,
 
         /**
-         * @var positive-int
+         * @var int<2, max>
          */
         public int $width,
 
         /**
-         * @var positive-int
+         * @var int<2, max>
          */
         public int $height,
         public string $data,
@@ -77,8 +77,8 @@ final readonly class MapStructure
 
         return new MapStructure(
             (int) $content['id'],
-            max((int) $content['width'], 1),
-            max((int) $content['height'], 1),
+            max((int) $content['width'], 2),
+            max((int) $content['height'], 2),
             (string) $content['mapData'],
             (int) ($content['backgroundNum'] ?? 0),
             (int) ($content['ambianceId'] ?? 0),

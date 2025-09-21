@@ -8,6 +8,7 @@ use Arakne\MapParser\Tile\Cache\TileCacheInterface;
 use Arakne\MapParser\Util\Bounds;
 use Closure;
 use GdImage;
+use Override;
 
 use function assert;
 use function ceil;
@@ -60,7 +61,7 @@ class BaseTileRenderer implements TileRendererInterface
         /**
          * The world map coordinates bounds
          */
-        private readonly Bounds $bounds,
+        public readonly Bounds $bounds,
 
         /**
          * The scale to apply to each map (default: 1.0)
@@ -161,20 +162,59 @@ class BaseTileRenderer implements TileRendererInterface
         return $maps;
     }
 
-    /**
-     * Render a single tile at the given [X,Y] coordinates
-     * Coordinates are in tile space, not map space
-     *
-     * @param non-negative-int $x The tile X coordinate
-     * @param non-negative-int $y The tile Y coordinate
-     * @param non-negative-int $zoom The zoom level (0 = normal, 1 = 4x zoom, 2 = 16x zoom, etc.)
-     *
-     * @return GdImage
-     */
+    #[Override]
+    public function warmup(?Closure $log = null, int $minZoom = 0): void
+    {
+        $currentMapCount = 0;
+        $totalMapCount = ($this->bounds->xMax - $this->bounds->xMin + 1) * ($this->bounds->yMax - $this->bounds->yMin + 1);
+        assert($totalMapCount >= 1);
+
+        for ($x = $this->bounds->xMin; $x <= $this->bounds->xMax; ++$x) {
+            for ($y = $this->bounds->yMin; $y <= $this->bounds->yMax; ++$y) {
+                if ($log) {
+                    $log('maps', ++$currentMapCount, $totalMapCount);
+                }
+
+                $this->cache->map(new MapCoordinates($x, $y), $this->mapRenderer);
+            }
+        }
+
+        $tileCount = $this->size;
+        $totalTiles = $tileCount * $tileCount;
+        $currentTile = 0;
+
+        for ($x = 0; $x < $tileCount; ++$x) {
+            for ($y = 0; $y < $tileCount; ++$y) {
+                if ($log) {
+                    $log('tiles', ++$currentTile, $totalTiles);
+                }
+
+                $this->renderOriginalSize($x, $y);
+            }
+        }
+
+        for ($z = $minZoom; $z < $this->maxZoom; ++$z) {
+            $tileCount = (int) (2 ** $z);
+            $totalTiles = $tileCount * $tileCount;
+            $currentTile = 0;
+
+            for ($x = 0; $x < $tileCount; ++$x) {
+                for ($y = 0; $y < $tileCount; ++$y) {
+                    if ($log) {
+                        $log("zoom {$z}", ++$currentTile, $totalTiles);
+                    }
+
+                    $this->render($x, $y, $z);
+                }
+            }
+        }
+    }
+
+    #[Override]
     final public function render(int $x, int $y, int $zoom = 0): GdImage
     {
         if ($zoom > $this->maxZoom) {
-            return $this->cache->tile($x, $y, $zoom, $this->renderUpscaled(...));
+            return $this->renderUpscaled($x, $y, $zoom);
         }
 
         if ($zoom === $this->maxZoom) {
@@ -184,15 +224,7 @@ class BaseTileRenderer implements TileRendererInterface
         return $this->cache->tile($x, $y, $zoom, $this->renderDownscaled(...));
     }
 
-    /**
-     * Render a single tile at the given [X,Y] coordinates with the maximum detail (i.e. max zoom)
-     * Coordinates are in tile space, not map space
-     *
-     * @param non-negative-int $x
-     * @param non-negative-int $y
-     *
-     * @return GdImage
-     */
+    #[Override]
     final public function renderOriginalSize(int $x, int $y): GdImage
     {
         return $this->cache->fullSizeTile($x, $y, $this->doRenderOriginalSize(...));

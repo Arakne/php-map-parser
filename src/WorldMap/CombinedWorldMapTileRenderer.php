@@ -11,12 +11,14 @@ use Arakne\MapParser\Tile\Cache\NullTileCache;
 use Arakne\MapParser\Tile\Cache\TileCacheInterface;
 use Arakne\MapParser\Tile\MapCoordinates;
 use Arakne\MapParser\Tile\TileRendererInterface;
+use Arakne\MapParser\Util\Bounds;
 use Closure;
 use GdImage;
 use Override;
 
 use function imagealphablending;
 use function imagesavealpha;
+use function max;
 
 /**
  * Combine both world map and game maps on same tiles.
@@ -37,6 +39,11 @@ final readonly class CombinedWorldMapTileRenderer implements TileRendererInterfa
      * @var non-negative-int
      */
     public int $maxZoom;
+
+    /**
+     * Bounds of the game maps coordinates
+     */
+    public Bounds $bounds;
 
     private TileRendererInterface $worldMapRenderer;
     private TileRendererInterface $gameMapRenderer;
@@ -85,13 +92,20 @@ final readonly class CombinedWorldMapTileRenderer implements TileRendererInterfa
         $this->gameMapRenderer = new TileRenderer(
             renderer: $this->renderer,
             mapResolver: $this->mapResolver,
-            bounds: $this->worldMap->bounds()->toActualMapBound(),
+            bounds: $this->bounds = $this->worldMap->bounds()->toActualMapBound(),
             scale: self::GAME_MAP_SCALE,
             cache: $this->cache->withNamespace('game_map'),
             loader: $this->loader,
         );
 
         $this->maxZoom = $this->gameMapRenderer->maxZoom;
+    }
+
+    #[Override]
+    public function warmup(?Closure $log = null, int $minZoom = 0): void
+    {
+        $this->worldMapRenderer->warmup($log, $minZoom);
+        $this->gameMapRenderer->warmup($log, max($minZoom, $this->minZoomLevel));
     }
 
     #[Override]

@@ -9,6 +9,7 @@ use Arakne\MapParser\Renderer\TileRenderer;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
 use Arakne\MapParser\Tile\Cache\FilesystemTileCache;
+use Arakne\MapParser\Tile\Cache\SqliteCache;
 use Arakne\MapParser\Tile\MapCoordinates;
 use Arakne\MapParser\Util\Bounds;
 use Arakne\Swf\SwfFile;
@@ -25,6 +26,7 @@ use function max;
 use function min;
 use function tempnam;
 use function unlink;
+use function var_dump;
 
 class TileRendererTest extends TestCase
 {
@@ -382,5 +384,200 @@ class TileRendererTest extends TestCase
         imagepng($cached, $cachedPath = tempnam('/tmp', 'tile_'));
 
         $this->assertImages($actual, $cachedPath);
+    }
+
+    #[Test]
+    public function functional_with_sqlite_cache()
+    {
+        $renderer = new TileRenderer(
+            new MapRenderer(
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+            ),
+            function (MapCoordinates $coords) {
+                if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
+                    return null;
+                }
+
+                return MapStructure::fromSwfFile(
+                    new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
+                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                );
+            },
+            new Bounds(
+                min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            ),
+            cache: new SqliteCache('/tmp/' . bin2hex(random_bytes(5))),
+        );
+
+        $img = $renderer->render(1, 1, 2);
+        imagepng($img, $actual = tempnam('/tmp', 'tile_'));
+
+        $cached = $renderer->render(1, 1, 2);
+        imagepng($cached, $cachedPath = tempnam('/tmp', 'tile_'));
+
+        $this->assertImages($actual, $cachedPath);
+    }
+
+    #[Test]
+    public function warmup()
+    {
+        $renderer = new TileRenderer(
+            new MapRenderer(
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+            ),
+            function (MapCoordinates $coords) {
+                if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
+                    return null;
+                }
+
+                return MapStructure::fromSwfFile(
+                    new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
+                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                );
+            },
+            new Bounds(
+                min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            ),
+            cache: new FilesystemTileCache($path = '/tmp/' . bin2hex(random_bytes(5))),
+        );
+
+        $logs = [];
+        $renderer->warmup(
+            function ($level, $current, $total) use (&$logs) {
+                $logs[] = [$level, $current, $total];
+            },
+        );
+
+        $this->assertSame([
+            ['maps', 1, 4],
+            ['maps', 2, 4],
+            ['maps', 3, 4],
+            ['maps', 4, 4],
+            ...array_map(
+                fn ($i) => ['tiles', $i, 64],
+                range(1, 64)
+            ),
+            ['zoom 0', 1, 1],
+            ['zoom 1', 1, 4],
+            ['zoom 1', 2, 4],
+            ['zoom 1', 3, 4],
+            ['zoom 1', 4, 4],
+            ['zoom 2', 1, 16],
+            ['zoom 2', 2, 16],
+            ['zoom 2', 3, 16],
+            ['zoom 2', 4, 16],
+            ['zoom 2', 5, 16],
+            ['zoom 2', 6, 16],
+            ['zoom 2', 7, 16],
+            ['zoom 2', 8, 16],
+            ['zoom 2', 9, 16],
+            ['zoom 2', 10, 16],
+            ['zoom 2', 11, 16],
+            ['zoom 2', 12, 16],
+            ['zoom 2', 13, 16],
+            ['zoom 2', 14, 16],
+            ['zoom 2', 15, 16],
+            ['zoom 2', 16, 16],
+        ], $logs);
+
+        $this->assertCount(64, glob($path . '/tiles/*.png'));
+        $this->assertEqualsCanonicalizing([
+            $path . '/maps/4_4.png',
+            $path . '/maps/4_5.png',
+            $path . '/maps/5_4.png',
+            $path . '/maps/5_5.png',
+        ], glob($path . '/maps/*.png'));
+        $this->assertEqualsCanonicalizing([
+            $path . '/zoom/0/0_0.png',
+        ], glob($path . '/zoom/0/*.png'));
+        $this->assertEqualsCanonicalizing([
+            $path . '/zoom/1/0_0.png',
+            $path . '/zoom/1/0_1.png',
+            $path . '/zoom/1/1_0.png',
+            $path . '/zoom/1/1_1.png',
+        ], glob($path . '/zoom/1/*.png'));
+        $this->assertCount(16, glob($path . '/zoom/2/*.png'));
+    }
+
+    #[Test]
+    public function warmupWithMinZoom()
+    {
+        $renderer = new TileRenderer(
+            new MapRenderer(
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+            ),
+            function (MapCoordinates $coords) {
+                if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
+                    return null;
+                }
+
+                return MapStructure::fromSwfFile(
+                    new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
+                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                );
+            },
+            new Bounds(
+                min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            ),
+            cache: new FilesystemTileCache($path = '/tmp/' . bin2hex(random_bytes(5))),
+        );
+
+        $logs = [];
+        $renderer->warmup(
+            function ($level, $current, $total) use (&$logs) {
+                $logs[] = [$level, $current, $total];
+            },
+            2
+        );
+
+        $this->assertSame([
+            ['maps', 1, 4],
+            ['maps', 2, 4],
+            ['maps', 3, 4],
+            ['maps', 4, 4],
+            ...array_map(
+                fn ($i) => ['tiles', $i, 64],
+                range(1, 64)
+            ),
+            ['zoom 2', 1, 16],
+            ['zoom 2', 2, 16],
+            ['zoom 2', 3, 16],
+            ['zoom 2', 4, 16],
+            ['zoom 2', 5, 16],
+            ['zoom 2', 6, 16],
+            ['zoom 2', 7, 16],
+            ['zoom 2', 8, 16],
+            ['zoom 2', 9, 16],
+            ['zoom 2', 10, 16],
+            ['zoom 2', 11, 16],
+            ['zoom 2', 12, 16],
+            ['zoom 2', 13, 16],
+            ['zoom 2', 14, 16],
+            ['zoom 2', 15, 16],
+            ['zoom 2', 16, 16],
+        ], $logs);
+
+        $this->assertCount(64, glob($path . '/tiles/*.png'));
+        $this->assertEqualsCanonicalizing([
+            $path . '/maps/4_4.png',
+            $path . '/maps/4_5.png',
+            $path . '/maps/5_4.png',
+            $path . '/maps/5_5.png',
+        ], glob($path . '/maps/*.png'));
+        $this->assertEmpty(glob($path . '/zoom/0/*.png'));
+        $this->assertEmpty(glob($path . '/zoom/1/*.png'));
+        $this->assertCount(16, glob($path . '/zoom/2/*.png'));
     }
 }
