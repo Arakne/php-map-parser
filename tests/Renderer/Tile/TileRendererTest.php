@@ -22,6 +22,7 @@ use function explode;
 use function file_get_contents;
 use function glob;
 use function imagepng;
+use function imagesavealpha;
 use function max;
 use function min;
 use function tempnam;
@@ -366,6 +367,7 @@ class TileRendererTest extends TestCase
         );
 
         $img = $renderer->render(1, 1, 2);
+        imagesavealpha($img, true);
         imagepng($img, $actual = tempnam('/tmp', 'tile_'));
 
         $this->assertImages($actual, $path . '/zoom/2/1_1.png');
@@ -381,6 +383,7 @@ class TileRendererTest extends TestCase
         ], glob($path . '/maps/*.png'));
 
         $cached = $renderer->render(1, 1, 2);
+        imagesavealpha($cached, true);
         imagepng($cached, $cachedPath = tempnam('/tmp', 'tile_'));
 
         $this->assertImages($actual, $cachedPath);
@@ -414,9 +417,11 @@ class TileRendererTest extends TestCase
         );
 
         $img = $renderer->render(1, 1, 2);
+        imagesavealpha($img, true);
         imagepng($img, $actual = tempnam('/tmp', 'tile_'));
 
         $cached = $renderer->render(1, 1, 2);
+        imagesavealpha($cached, true);
         imagepng($cached, $cachedPath = tempnam('/tmp', 'tile_'));
 
         $this->assertImages($actual, $cachedPath);

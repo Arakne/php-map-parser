@@ -2,7 +2,6 @@
 
 namespace WorldMap;
 
-use _PHPStan_1c270d899\Symfony\Component\Finder\Iterator\RecursiveDirectoryIterator;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
@@ -15,6 +14,7 @@ use Arakne\Swf\SwfFile;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 
