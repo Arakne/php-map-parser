@@ -7,8 +7,8 @@ use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Tile\BaseTileRenderer;
 use Arakne\MapParser\Tile\Cache\NullTileCache;
 use Arakne\MapParser\Tile\Cache\TileCacheInterface;
-use Arakne\MapParser\Tile\MapCoordinates;
-use Arakne\MapParser\Util\Bounds;
+use Arakne\MapParser\Tile\Coordinate\Bounds;
+use Arakne\MapParser\Tile\TileMapCoordinates;
 use Closure;
 use GdImage;
 
@@ -34,7 +34,7 @@ final class TileRenderer extends BaseTileRenderer
         /**
          * Resolve the map from the [X,Y] coordinates
          *
-         * @var Closure(MapCoordinates):(MapStructure|null)
+         * @var Closure(TileMapCoordinates):(MapStructure|null)
          */
         private readonly Closure $mapResolver,
         Bounds $bounds,
@@ -54,7 +54,7 @@ final class TileRenderer extends BaseTileRenderer
         );
     }
 
-    private function doRenderMap(MapCoordinates $coordinates): ?GdImage
+    private function doRenderMap(TileMapCoordinates $coordinates): ?GdImage
     {
         if (!$map = ($this->mapResolver)($coordinates)) {
             return null;

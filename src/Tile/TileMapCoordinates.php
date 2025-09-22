@@ -2,7 +2,10 @@
 
 namespace Arakne\MapParser\Tile;
 
-final class MapCoordinates
+/**
+ * Store map coordinates and offsets for rendering on a tile
+ */
+final class TileMapCoordinates
 {
     public function __construct(
         /**

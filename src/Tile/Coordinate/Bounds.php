@@ -1,6 +1,6 @@
 <?php
 
-namespace Arakne\MapParser\Util;
+namespace Arakne\MapParser\Tile\Coordinate;
 
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Renderer\TileRenderer;
@@ -32,7 +32,7 @@ final readonly class Bounds
         assert($xMin <= $xMax && $yMin <= $yMax);
     }
 
-    public function inBBox(BBox $bbox, int $zoom): self
+    public function inBBox(LatLongBounds $bbox, int $zoom): self
     {
         $n = 2 ** $zoom * TileRenderer::TILE_SIZE;
 
@@ -50,10 +50,10 @@ final readonly class Bounds
         $ytileMax += $this->xMin * $mapHeight;
 
         return new self(
-            xMin: max($this->xMin, (int) ($xtileMin / MapRenderer::DISPLAY_WIDTH)),
-            xMax: min($this->xMax, (int) ($xtileMax / MapRenderer::DISPLAY_WIDTH)),
-            yMin: max($this->yMin, (int) ($ytileMin / MapRenderer::DISPLAY_HEIGHT)),
-            yMax: min($this->yMax, (int) ($ytileMax / MapRenderer::DISPLAY_HEIGHT)),
+            xMin: max($this->xMin, (int) ($xtileMin / $mapWidth)),
+            xMax: min($this->xMax, (int) ($xtileMax / $mapWidth)),
+            yMin: max($this->yMin, (int) ($ytileMin / $mapHeight)),
+            yMax: min($this->yMax, (int) ($ytileMax / $mapHeight)),
         );
     }
 

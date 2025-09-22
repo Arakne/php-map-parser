@@ -10,8 +10,8 @@ use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
 use Arakne\MapParser\Tile\Cache\FilesystemTileCache;
 use Arakne\MapParser\Tile\Cache\SqliteCache;
-use Arakne\MapParser\Tile\MapCoordinates;
-use Arakne\MapParser\Util\Bounds;
+use Arakne\MapParser\Tile\Coordinate\Bounds;
+use Arakne\MapParser\Tile\TileMapCoordinates;
 use Arakne\Swf\SwfFile;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,7 +27,6 @@ use function max;
 use function min;
 use function tempnam;
 use function unlink;
-use function var_dump;
 
 class TileRendererTest extends TestCase
 {
@@ -55,7 +54,7 @@ class TileRendererTest extends TestCase
         );
 
         $this->assertEquals([
-            new MapCoordinates(
+            new TileMapCoordinates(
                 x: -10,
                 y: 5,
                 xSourceOffset: 0,
@@ -66,7 +65,7 @@ class TileRendererTest extends TestCase
         ], $renderer->toMapCoordinates(0, 0));
 
         $this->assertEquals([
-            new MapCoordinates(
+            new TileMapCoordinates(
                 x: -10,
                 y: 5,
                 xSourceOffset: 256,
@@ -77,7 +76,7 @@ class TileRendererTest extends TestCase
         ], $renderer->toMapCoordinates(1, 0));
 
         $this->assertEquals([
-            new MapCoordinates(
+            new TileMapCoordinates(
                 x: -10,
                 y: 5,
                 xSourceOffset: 512,
@@ -85,7 +84,7 @@ class TileRendererTest extends TestCase
                 xDestinationOffset: 0,
                 yDestinationOffset: 0,
             ),
-            new MapCoordinates(
+            new TileMapCoordinates(
                 x: -9,
                 y: 5,
                 xSourceOffset: 0,
@@ -96,7 +95,7 @@ class TileRendererTest extends TestCase
         ], $renderer->toMapCoordinates(2, 0));
 
         $this->assertEquals([
-            new MapCoordinates(
+            new TileMapCoordinates(
                 x: -9,
                 y: 5,
                 xSourceOffset: 26,
@@ -107,7 +106,7 @@ class TileRendererTest extends TestCase
         ], $renderer->toMapCoordinates(3, 0));
 
         $this->assertEquals([
-            new MapCoordinates(
+            new TileMapCoordinates(
                 x: -10,
                 y: 5,
                 xSourceOffset: 0,
@@ -115,7 +114,7 @@ class TileRendererTest extends TestCase
                 xDestinationOffset: 0,
                 yDestinationOffset: 0,
             ),
-            new MapCoordinates(
+            new TileMapCoordinates(
                 x: -10,
                 y: 6,
                 xSourceOffset: 0,
@@ -126,7 +125,7 @@ class TileRendererTest extends TestCase
         ], $renderer->toMapCoordinates(0, 1));
 
         $this->assertEquals([
-            new MapCoordinates(
+            new TileMapCoordinates(
                 x: -10,
                 y: 6,
                 xSourceOffset: 0,
@@ -137,7 +136,7 @@ class TileRendererTest extends TestCase
         ], $renderer->toMapCoordinates(0, 2));
 
         $this->assertEquals([
-            new MapCoordinates(
+            new TileMapCoordinates(
                 x: -10,
                 y: 5,
                 xSourceOffset: 256,
@@ -145,7 +144,7 @@ class TileRendererTest extends TestCase
                 xDestinationOffset: 0,
                 yDestinationOffset: 0,
             ),
-            new MapCoordinates(
+            new TileMapCoordinates(
                 x: -10,
                 y: 6,
                 xSourceOffset: 256,
@@ -156,7 +155,7 @@ class TileRendererTest extends TestCase
         ], $renderer->toMapCoordinates(1, 1));
 
         $this->assertEquals([
-            new MapCoordinates(
+            new TileMapCoordinates(
                 x: -10,
                 y: 5,
                 xSourceOffset: 512,
@@ -164,7 +163,7 @@ class TileRendererTest extends TestCase
                 xDestinationOffset: 0,
                 yDestinationOffset: 0,
             ),
-            new MapCoordinates(
+            new TileMapCoordinates(
                 x: -9,
                 y: 5,
                 xSourceOffset: 0,
@@ -172,7 +171,7 @@ class TileRendererTest extends TestCase
                 xDestinationOffset: 230,
                 yDestinationOffset: 0,
             ),
-            new MapCoordinates(
+            new TileMapCoordinates(
                 x: -10,
                 y: 6,
                 xSourceOffset: 512,
@@ -180,7 +179,7 @@ class TileRendererTest extends TestCase
                 xDestinationOffset: 0,
                 yDestinationOffset: 176,
             ),
-            new MapCoordinates(
+            new TileMapCoordinates(
                 x: -9,
                 y: 6,
                 xSourceOffset: 0,
@@ -199,7 +198,7 @@ class TileRendererTest extends TestCase
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
             ),
-            function (MapCoordinates $coords) {
+            function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
                     return null;
                 }
@@ -235,7 +234,7 @@ class TileRendererTest extends TestCase
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
             ),
-            function (MapCoordinates $coords) {
+            function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
                     return null;
                 }
@@ -273,7 +272,7 @@ class TileRendererTest extends TestCase
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
             ),
-            function (MapCoordinates $coords) {
+            function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
                     return null;
                 }
@@ -310,7 +309,7 @@ class TileRendererTest extends TestCase
         foreach ([1.1, 1.3, 1.5] as $scale) {
             $renderer = new TileRenderer(
                 $mapRenderer,
-                function (MapCoordinates $coords) {
+                function (TileMapCoordinates $coords) {
                     if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
                         return null;
                     }
@@ -347,7 +346,7 @@ class TileRendererTest extends TestCase
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
             ),
-            function (MapCoordinates $coords) {
+            function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
                     return null;
                 }
@@ -397,7 +396,7 @@ class TileRendererTest extends TestCase
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
             ),
-            function (MapCoordinates $coords) {
+            function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
                     return null;
                 }
@@ -435,7 +434,7 @@ class TileRendererTest extends TestCase
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
             ),
-            function (MapCoordinates $coords) {
+            function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
                     return null;
                 }
@@ -520,7 +519,7 @@ class TileRendererTest extends TestCase
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
                 new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
             ),
-            function (MapCoordinates $coords) {
+            function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
                     return null;
                 }
@@ -584,5 +583,35 @@ class TileRendererTest extends TestCase
         $this->assertEmpty(glob($path . '/zoom/0/*.png'));
         $this->assertEmpty(glob($path . '/zoom/1/*.png'));
         $this->assertCount(16, glob($path . '/zoom/2/*.png'));
+    }
+
+    #[Test]
+    public function properties()
+    {
+        $renderer = new TileRenderer(
+            new MapRenderer(
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+            ),
+            function (TileMapCoordinates $coords) {
+                if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
+                    return null;
+                }
+
+                return MapStructure::fromSwfFile(
+                    new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
+                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                );
+            },
+            new Bounds(
+                min(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[0], array_keys(self::MAPS))),
+                min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+                max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
+            ),
+        );
+
+        $this->assertSame(3, $renderer->maxZoom);
+        $this->assertEquals(new Bounds(4, 5, 4, 5), $renderer->bounds);
     }
 }

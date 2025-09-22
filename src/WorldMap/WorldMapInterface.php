@@ -3,7 +3,7 @@
 namespace Arakne\MapParser\WorldMap;
 
 use Arakne\MapParser\Renderer\MapRenderer;
-use Arakne\MapParser\Util\Bounds;
+use Arakne\MapParser\Tile\Coordinate\Bounds;
 
 /**
  * Represents a dofus world map file

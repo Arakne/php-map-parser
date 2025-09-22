@@ -28,6 +28,36 @@ final readonly class CellShape
     ) {}
 
     /**
+     * Parse a single cell data to cell shape from its cell id
+     *
+     * @param Map $map
+     * @param non-negative-int $cellId
+     *
+     * @return self|null
+     */
+    public static function fromCellId(Map $map, int $cellId): ?self
+    {
+        if (!($cell = $map->cells[$cellId] ?? null)) {
+            return null;
+        }
+
+        $line = (int) ($cellId / ($map->width * 2 - 1));
+        $column = $cellId % ($map->width * 2 - 1);
+
+        if ($column >= $map->width) {
+            $column -= $map->width;
+            $subLine = 1;
+        } else {
+            $subLine = 0;
+        }
+
+        $x = (int) ($column * MapRenderer::CELL_WIDTH + $subLine * MapRenderer::CELL_HALF_WIDTH);
+        $y = (int) ($line * MapRenderer::CELL_HEIGHT + $subLine * MapRenderer::CELL_HALF_HEIGHT - MapRenderer::LEVEL_HEIGHT * ($cell->ground->level - 7));
+
+        return new self($x, $y, $cell);
+    }
+
+    /**
      * Transform cell data to cell shapes
      *
      * @param Map $map Map to load

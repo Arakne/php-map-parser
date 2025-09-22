@@ -3,7 +3,7 @@
 namespace Arakne\MapParser\WorldMap;
 
 use Arakne\MapParser\Renderer\MapRenderer;
-use Arakne\MapParser\Util\Bounds;
+use Arakne\MapParser\Tile\Coordinate\Bounds;
 use Arakne\Swf\Extractor\Drawer\Converter\Converter;
 use Arakne\Swf\Extractor\Sprite\SpriteDefinition;
 use Arakne\Swf\Extractor\SwfExtractor;

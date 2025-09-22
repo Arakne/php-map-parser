@@ -3,6 +3,8 @@
 namespace WorldMap;
 
 use Arakne\MapParser\Test\AssertImageTrait;
+use Arakne\MapParser\Tile\Coordinate\Bounds;
+use Arakne\MapParser\Tile\Coordinate\LatLongBounds;
 use Arakne\MapParser\WorldMap\SwfWorldMap;
 use Arakne\MapParser\WorldMap\WorldMapTileRenderer;
 use Arakne\Swf\SwfFile;
@@ -58,5 +60,23 @@ class WorldMapTileRendererTest extends TestCase
             );
             unlink($actual);
         }
+    }
+
+    #[Test]
+    public function properties()
+    {
+        $renderer = new WorldMapTileRenderer(new SwfWorldMap(new SwfFile(__DIR__ . '/Fixtures/3.swf')));
+
+        $this->assertEquals(new Bounds(-2, 1, -2, 3), $renderer->bounds);
+        $this->assertSame(4, $renderer->maxZoom);
+        $this->assertEquals(
+            new Bounds(0, 0, 0, 0),
+            $renderer->coordinate->toMapBounds(new LatLongBounds(
+                -33.34350585937501,
+                66.37275500247458,
+                -23.087768554687504,
+                67.676084581981
+            ))
+        );
     }
 }

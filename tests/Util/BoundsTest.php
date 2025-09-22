@@ -2,7 +2,7 @@
 
 namespace Util;
 
-use Arakne\MapParser\Util\Bounds;
+use Arakne\MapParser\Tile\Coordinate\Bounds;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

@@ -63,7 +63,7 @@
 
     async function fetchTeleports() {
         const z = mymap.getZoom();
-        const minZoomToShow = 8; // ne rien demander en dessous si inutile
+        const minZoomToShow = 7; // ne rien demander en dessous si inutile
         if (z < minZoomToShow) {
             tpLayer.clearLayers();
             return;

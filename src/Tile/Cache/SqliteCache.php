@@ -2,7 +2,7 @@
 
 namespace Arakne\MapParser\Tile\Cache;
 
-use Arakne\MapParser\Tile\MapCoordinates;
+use Arakne\MapParser\Tile\TileMapCoordinates;
 use Closure;
 use GdImage;
 use Override;
@@ -42,7 +42,7 @@ final readonly class SqliteCache implements TileCacheInterface
     }
 
     #[Override]
-    public function map(MapCoordinates $coordinates, Closure $compute): ?GdImage
+    public function map(TileMapCoordinates $coordinates, Closure $compute): ?GdImage
     {
         $stmt = $this->pdo->prepare('SELECT data FROM maps WHERE namespace = ? AND x = ? AND y = ?');
         $stmt->execute([$this->namespace, $coordinates->x, $coordinates->y]);

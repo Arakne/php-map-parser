@@ -3,7 +3,7 @@
 namespace WorldMap;
 
 use Arakne\MapParser\Test\AssertImageTrait;
-use Arakne\MapParser\Util\Bounds;
+use Arakne\MapParser\Tile\Coordinate\Bounds;
 use Arakne\MapParser\WorldMap\SwfWorldMap;
 use Arakne\Swf\SwfFile;
 use PHPUnit\Framework\Attributes\Test;

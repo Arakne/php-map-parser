@@ -7,7 +7,9 @@ use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
 use Arakne\MapParser\Tile\Cache\FilesystemTileCache;
-use Arakne\MapParser\Tile\MapCoordinates;
+use Arakne\MapParser\Tile\Coordinate\Bounds;
+use Arakne\MapParser\Tile\Coordinate\LatLongBounds;
+use Arakne\MapParser\Tile\TileMapCoordinates;
 use Arakne\MapParser\WorldMap\CombinedWorldMapTileRenderer;
 use Arakne\MapParser\WorldMap\SwfWorldMap;
 use Arakne\Swf\SwfFile;
@@ -67,7 +69,7 @@ class CombinedWorldMapTileRendererTest extends TestCase
                 new SwfSpriteRepository(glob(__DIR__ . '/../_files/clips/gfx/g*.swf')),
                 new SwfSpriteRepository(glob(__DIR__ . '/../_files/clips/gfx/o*.swf')),
             ),
-            function (MapCoordinates $coords) {
+            function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
                     return null;
                 }
@@ -116,5 +118,21 @@ class CombinedWorldMapTileRendererTest extends TestCase
 
         $this->assertImages($expected, $actual);
         unlink($actual);
+    }
+
+    #[Test]
+    public function properties()
+    {
+        $this->assertEquals(new Bounds(-30, 29, -30, 59), $this->renderer->bounds);
+        $this->assertSame(8, $this->renderer->maxZoom);
+        $this->assertEquals(
+            new Bounds(3, 6, 4, 5),
+            $this->renderer->coordinate->toMapBounds(new LatLongBounds(
+                -33.34350585937501,
+                66.37275500247458,
+                -23.087768554687504,
+                67.676084581981
+            ))
+        );
     }
 }

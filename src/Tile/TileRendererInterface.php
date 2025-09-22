@@ -2,7 +2,8 @@
 
 namespace Arakne\MapParser\Tile;
 
-use Arakne\MapParser\Util\Bounds;
+use Arakne\MapParser\Tile\Coordinate\Bounds;
+use Arakne\MapParser\Tile\Coordinate\CoordinateSystem;
 use Closure;
 use GdImage;
 
@@ -23,6 +24,11 @@ interface TileRendererInterface
      * Bounds of the map coordinates
      */
     public Bounds $bounds { get; }
+
+    /**
+     * Get the coordinate system used for maps
+     */
+    public CoordinateSystem $coordinate { get; }
 
     /**
      * Warmup the tile cache by pre-rendering all tiles up to the given maximum zoom level

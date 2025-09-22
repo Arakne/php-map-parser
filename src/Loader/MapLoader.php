@@ -17,7 +17,7 @@ final readonly class MapLoader
     /**
      * Creates the map by parsing cells data
      */
-    public function load(MapStructure $map): Map
+    public function load(MapStructure $map, object ...$attachments): Map
     {
         if ($map->encrypted && $map->key !== null) {
             $data = XorCipher::fromHexKey($map->key)->decrypt($map->data);
@@ -25,6 +25,9 @@ final readonly class MapLoader
             $data = $map->data;
         }
 
-        return $map->withCells($this->cellParser->parse($data));
+        return $map->withCells(
+            $this->cellParser->parse($data),
+            $attachments,
+        );
     }
 }

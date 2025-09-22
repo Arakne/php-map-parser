@@ -9,9 +9,10 @@ use Arakne\MapParser\Renderer\TileRenderer;
 use Arakne\MapParser\Tile\BaseTileRenderer;
 use Arakne\MapParser\Tile\Cache\NullTileCache;
 use Arakne\MapParser\Tile\Cache\TileCacheInterface;
-use Arakne\MapParser\Tile\MapCoordinates;
+use Arakne\MapParser\Tile\Coordinate\Bounds;
+use Arakne\MapParser\Tile\Coordinate\CoordinateSystem;
+use Arakne\MapParser\Tile\TileMapCoordinates;
 use Arakne\MapParser\Tile\TileRendererInterface;
-use Arakne\MapParser\Util\Bounds;
 use Closure;
 use GdImage;
 use Override;
@@ -45,6 +46,11 @@ final readonly class CombinedWorldMapTileRenderer implements TileRendererInterfa
      */
     public Bounds $bounds;
 
+    /**
+     * Coordinate system used for game maps
+     */
+    public CoordinateSystem $coordinate;
+
     private TileRendererInterface $worldMapRenderer;
     private TileRendererInterface $gameMapRenderer;
 
@@ -62,7 +68,7 @@ final readonly class CombinedWorldMapTileRenderer implements TileRendererInterfa
         /**
          * Resolve the map from the [X,Y] coordinates
          *
-         * @var Closure(MapCoordinates):(MapStructure|null)
+         * @var Closure(TileMapCoordinates):(MapStructure|null)
          */
         private Closure $mapResolver,
 
@@ -99,6 +105,7 @@ final readonly class CombinedWorldMapTileRenderer implements TileRendererInterfa
         );
 
         $this->maxZoom = $this->gameMapRenderer->maxZoom;
+        $this->coordinate = $this->gameMapRenderer->coordinate;
     }
 
     #[Override]

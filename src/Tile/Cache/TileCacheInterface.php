@@ -2,7 +2,7 @@
 
 namespace Arakne\MapParser\Tile\Cache;
 
-use Arakne\MapParser\Tile\MapCoordinates;
+use Arakne\MapParser\Tile\TileMapCoordinates;
 use Closure;
 use GdImage;
 
@@ -14,12 +14,12 @@ interface TileCacheInterface
     /**
      * Get (or compute and store) the rendered map image
      *
-     * @param MapCoordinates $coordinates
-     * @param Closure(MapCoordinates):(GdImage|null) $compute
+     * @param TileMapCoordinates $coordinates
+     * @param Closure(TileMapCoordinates):(GdImage|null) $compute
      *
      * @return GdImage|null
      */
-    public function map(MapCoordinates $coordinates, Closure $compute): ?GdImage;
+    public function map(TileMapCoordinates $coordinates, Closure $compute): ?GdImage;
 
     /**
      * Get (or compute and store) the rendered full-size tile image

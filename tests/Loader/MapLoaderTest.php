@@ -34,6 +34,24 @@ class MapLoaderTest extends TestCase
     }
 
     #[Test]
+    public function loadWithAttachment()
+    {
+        $map = $this->loader->load(
+            new MapStructure(10340, 15, 17, file_get_contents(__DIR__.'/../_files/10340.data')),
+            $coords = new MapCoordinates(3, 6, 449)
+        );
+
+        $this->assertEquals(10340, $map->id);
+        $this->assertEquals(15, $map->width);
+        $this->assertEquals(17, $map->height);
+        $this->assertCount(479, $map->cells);
+        $this->assertContainsOnlyInstancesOf(Cell::class, $map->cells);
+        $this->assertSame($coords, $map->get(MapCoordinates::class));
+        $this->assertEquals(3, $map->x);
+        $this->assertEquals(6, $map->y);
+    }
+
+    #[Test]
     public function test_load_encrypted()
     {
         $map = $this->loader->load(

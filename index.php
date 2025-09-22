@@ -1,14 +1,18 @@
 <?php
 
+use Arakne\MapParser\Loader\Map;
+use Arakne\MapParser\Loader\MapCoordinates;
 use Arakne\MapParser\Loader\MapLoader;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\CellShape;
 use Arakne\MapParser\Renderer\MapRenderer;
+use Arakne\MapParser\Renderer\TileRenderer;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Tile\Cache\SqliteCache;
-use Arakne\MapParser\Tile\MapCoordinates;
-use Arakne\MapParser\Util\BBox;
-use Arakne\MapParser\Util\Bounds;
+use Arakne\MapParser\Tile\Coordinate\CoordinateSystem;
+use Arakne\MapParser\Tile\Coordinate\LatLongBounds;
+use Arakne\MapParser\Tile\Coordinate\Bounds;
+use Arakne\MapParser\Tile\TileMapCoordinates;
 use Arakne\MapParser\WorldMap\CombinedWorldMapTileRenderer;
 use Arakne\MapParser\WorldMap\SwfWorldMap;
 use Arakne\Swf\SwfFile;
@@ -35,7 +39,7 @@ $mapRenderer = new MapRenderer(
 $amaknaRenderer = new CombinedWorldMapTileRenderer(
     new SwfWorldMap(new SwfFile(__DIR__.'/maps/0.swf')),
     $mapRenderer,
-    function (MapCoordinates $coordinates) use($dofusMapsDir) {
+    function (TileMapCoordinates $coordinates) use($dofusMapsDir) {
         $query = <<<'SQL'
             SELECT * FROM maps 
             WHERE MAP_X = ? AND MAP_Y = ?
@@ -72,7 +76,7 @@ $amaknaRenderer = new CombinedWorldMapTileRenderer(
 $incarnamRenderer = new CombinedWorldMapTileRenderer(
     new SwfWorldMap(new SwfFile(__DIR__.'/maps/3.swf')),
     $mapRenderer,
-    function (MapCoordinates $coordinates) use($dofusMapsDir) {
+    function (TileMapCoordinates $coordinates) use($dofusMapsDir) {
         $query = <<<'SQL'
             SELECT * FROM maps 
             WHERE MAP_X = ? AND MAP_Y = ?
@@ -106,6 +110,10 @@ $incarnamRenderer = new CombinedWorldMapTileRenderer(
     cache: new SqliteCache($cacheDir . '/incarnam.db')
 );
 
+/**
+ * @param Bounds $bounds
+ * @return array<int, Map>
+ */
 function incarnamMapsInBounds(Bounds $bounds): array
 {
     global $dofusMapsDir;
@@ -128,18 +136,22 @@ function incarnamMapsInBounds(Bounds $bounds): array
     $stmt->bindValue(4, $bounds->yMax, PDO::PARAM_INT);
     $stmt->execute();
 
+    $loader = new MapLoader();
     $maps = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $structures = [];
+    $loaded = [];
 
     foreach ($maps as $map) {
         $mapFile = $dofusMapsDir . '/' . $map['id'] . '_' . $map['date'] . ($map['key'] ? 'X' : '') . '.swf';
 
         if (is_file($mapFile)) {
-            $structures[] = MapStructure::fromSwfFile(new SwfFile($mapFile), $map['key']);
+            $loaded[$map['id']] = $loader->load(
+                MapStructure::fromSwfFile(new SwfFile($mapFile), $map['key']),
+                new MapCoordinates($map['MAP_X'], $map['MAP_Y'])
+            );
         }
     }
 
-    return $structures;
+    return $loaded;
 }
 function amaknaMapsInBounds(Bounds $bounds): array
 {
@@ -249,43 +261,23 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
             break;
 
         case '/markers/incarnam':
-            $bbox = BBox::fromString($request->get('bbox'));
-
-            $bounds = $incarnamRenderer->bounds->inBBox($bbox, $incarnamRenderer->maxZoom);
+            $bbox = LatLongBounds::fromString($request->get('bbox'));
+            $bounds = $incarnamRenderer->coordinate->toMapBounds($bbox);
             $maps = incarnamMapsInBounds($bounds);
-            $triggers = loadTriggers(array_map(fn (MapStructure $m) => $m->id, $maps));
-
-            $cellShapes = [];
-            foreach ($maps as $map) {
-                $cellShapes[$map->id] = CellShape::fromMap(new MapLoader()->load($map));
-            }
+            $triggers = loadTriggers(array_map(fn (Map $m) => $m->id, $maps));
 
             $points = [];
 
             foreach ($triggers as $mapId => $triggersOnMap) {
                 foreach ($triggersOnMap as $trigger) {
                     $cellId = (int) $trigger['CELL_ID'];
-                    $triggerCell = $cellShapes[$mapId][$cellId] ?? null;
-
-                    if (!$triggerCell) {
-                        continue;
-                    }
-
-                    [$mapX, $mapY] = mapCoordinates($mapId);
-
-                    $mapX -= $incarnamRenderer->bounds->xMin;
-                    $mapY -= $incarnamRenderer->bounds->yMin;
-                    $mapX *= MapRenderer::DISPLAY_WIDTH;
-                    $mapY *= MapRenderer::DISPLAY_HEIGHT;
-
-                    $pointInPixelX = ($mapX + $triggerCell->x) * 16 / 15;
-                    $pointInPixelY = ($mapY + $triggerCell->y) * 16 / 15;
+                    $triggerCoordinates = $incarnamRenderer->coordinate->cellToLatLong($maps[$mapId], $cellId);
 
                     $points[] = [
                         'type' => 'Feature',
                         'geometry' => [
                             'type' => 'Point',
-                            'coordinates' => pixelsToLongLat($pointInPixelX, $pointInPixelY, $incarnamRenderer->maxZoom),
+                            'coordinates' => [$triggerCoordinates->longitude, $triggerCoordinates->latitude],
                         ],
                         'properties' => [
                             'id' => $trigger['TRIGGER_ID'],
@@ -308,15 +300,15 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
             ));
 
         case '/markers/amakna':
-            $bbox = BBox::fromString($request->get('bbox'));
-
-            $bounds = $amaknaRenderer->bounds->inBBox($bbox, $amaknaRenderer->maxZoom);
+            $bbox = LatLongBounds::fromString($request->get('bbox'));
+            $bounds = $amaknaRenderer->coordinate->toMapBounds($bbox);
             $maps = amaknaMapsInBounds($bounds);
             $triggers = loadTriggers(array_map(fn (MapStructure $m) => $m->id, $maps));
 
-            $cellShapes = [];
+            $loadedMaps = [];
+
             foreach ($maps as $map) {
-                $cellShapes[$map->id] = CellShape::fromMap(new MapLoader()->load($map));
+                $loadedMaps[$map->id] = new MapLoader()->load($map);
             }
 
             $points = [];
@@ -324,7 +316,7 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
             foreach ($triggers as $mapId => $triggersOnMap) {
                 foreach ($triggersOnMap as $trigger) {
                     $cellId = (int) $trigger['CELL_ID'];
-                    $triggerCell = $cellShapes[$mapId][$cellId] ?? null;
+                    $triggerCell = CellShape::fromCellId($loadedMaps[$mapId], $cellId);
 
                     if (!$triggerCell) {
                         continue;

@@ -34,6 +34,8 @@ final readonly class MapStructure
         public bool $outdoor = true,
         public int $capabilities = 0,
         public bool $encrypted = false,
+
+        // @todo remove from here
         public ?string $key = null,
     ) {}
 
@@ -41,9 +43,11 @@ final readonly class MapStructure
      * Instantiate the {@see Map} object with the given cells.
      *
      * @param list<Cell> $cells
+     * @param array<object> $attachments
+     *
      * @return Map
      */
-    public function withCells(array $cells): Map
+    public function withCells(array $cells, array $attachments = []): Map
     {
         return new Map(
             $this->id,
@@ -51,6 +55,7 @@ final readonly class MapStructure
             $this->height,
             $this->background,
             $cells,
+            $attachments,
         );
     }
 

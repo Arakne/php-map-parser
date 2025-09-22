@@ -5,7 +5,8 @@ namespace Arakne\MapParser\Tile;
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Tile\Cache\NullTileCache;
 use Arakne\MapParser\Tile\Cache\TileCacheInterface;
-use Arakne\MapParser\Util\Bounds;
+use Arakne\MapParser\Tile\Coordinate\Bounds;
+use Arakne\MapParser\Tile\Coordinate\CoordinateSystem;
 use Closure;
 use GdImage;
 use Override;
@@ -46,6 +47,11 @@ class BaseTileRenderer implements TileRendererInterface
      */
     public readonly int $maxZoom;
 
+    /**
+     * Get the coordinate system used for maps
+     */
+    public readonly CoordinateSystem $coordinate;
+
     public function __construct(
         /**
          * Resolve the map from the [X,Y] coordinates
@@ -54,7 +60,7 @@ class BaseTileRenderer implements TileRendererInterface
          * Note: the map should have alpha channel enabled for proper rendering,
          *       so you should call `imagesavealpha($img, true)` before returning the image.
          *
-         * @var Closure(MapCoordinates):(GdImage|null)
+         * @var Closure(TileMapCoordinates):(GdImage|null)
          */
         private readonly Closure $mapRenderer,
 
@@ -107,8 +113,18 @@ class BaseTileRenderer implements TileRendererInterface
         private readonly TileCacheInterface $cache = new NullTileCache(),
     ) {
         $this->size = self::computeSize($bounds, $tileSize, $mapWidth, $mapHeight, $scale);
-        // @phpstan-ignore assign.propertyType
-        $this->maxZoom = (int) log($this->size, 2);
+        $maxZoom = (int) log($this->size, 2);
+        assert($maxZoom >= 0);
+        $this->maxZoom = $maxZoom;
+
+        $this->coordinate = new CoordinateSystem(
+            $bounds,
+            $tileSize,
+            $maxZoom,
+            $mapWidth,
+            $mapHeight,
+            $scale,
+        );
     }
 
     /**
@@ -118,7 +134,7 @@ class BaseTileRenderer implements TileRendererInterface
      * @param non-negative-int $x
      * @param non-negative-int $y
      *
-     * @return MapCoordinates[]
+     * @return TileMapCoordinates[]
      */
     final public function toMapCoordinates(int $x, int $y): array
     {
@@ -140,7 +156,7 @@ class BaseTileRenderer implements TileRendererInterface
         $Xoffset = (int) (($x * $this->tileSize) - ($mapX * $scaledWidth));
         $Yoffset = (int) (($y * $this->tileSize) - ($mapY * $scaledHeight));
 
-        $map = new MapCoordinates($mapX + $xMin, $mapY + $yMin, $Xoffset, $Yoffset);
+        $map = new TileMapCoordinates($mapX + $xMin, $mapY + $yMin, $Xoffset, $Yoffset);
 
         $maps = [$map];
 
@@ -148,15 +164,15 @@ class BaseTileRenderer implements TileRendererInterface
         $hasY = ($y + 1) * $this->tileSize > ($mapY + 1) * $scaledHeight && $mapY + $yMin < $yMax;
 
         if ($hasX) {
-            $maps[] = new MapCoordinates($mapX + $xMin + 1, $mapY + $yMin, 0, $Yoffset, (int) ($scaledWidth - $Xoffset), 0);
+            $maps[] = new TileMapCoordinates($mapX + $xMin + 1, $mapY + $yMin, 0, $Yoffset, (int) ($scaledWidth - $Xoffset), 0);
         }
 
         if ($hasY) {
-            $maps[] = new MapCoordinates($mapX + $xMin, $mapY + $yMin + 1, $Xoffset, 0, 0, (int) ($scaledHeight - $Yoffset));
+            $maps[] = new TileMapCoordinates($mapX + $xMin, $mapY + $yMin + 1, $Xoffset, 0, 0, (int) ($scaledHeight - $Yoffset));
         }
 
         if ($hasX && $hasY) {
-            $maps[] = new MapCoordinates($mapX + $xMin + 1, $mapY + $yMin + 1, 0, 0, (int) ($scaledWidth - $Xoffset), (int) ($scaledHeight - $Yoffset));
+            $maps[] = new TileMapCoordinates($mapX + $xMin + 1, $mapY + $yMin + 1, 0, 0, (int) ($scaledWidth - $Xoffset), (int) ($scaledHeight - $Yoffset));
         }
 
         return $maps;
@@ -175,7 +191,7 @@ class BaseTileRenderer implements TileRendererInterface
                     $log('maps', ++$currentMapCount, $totalMapCount);
                 }
 
-                $this->cache->map(new MapCoordinates($x, $y), $this->mapRenderer);
+                $this->cache->map(new TileMapCoordinates($x, $y), $this->mapRenderer);
             }
         }
 
@@ -295,7 +311,7 @@ class BaseTileRenderer implements TileRendererInterface
         return $img;
     }
 
-    private function renderMap(MapCoordinates $coordinates): ?GdImage
+    private function renderMap(TileMapCoordinates $coordinates): ?GdImage
     {
         $img = $this->cache->map($coordinates, $this->mapRenderer);
 

@@ -6,7 +6,7 @@ use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Tile\BaseTileRenderer;
 use Arakne\MapParser\Tile\Cache\NullTileCache;
 use Arakne\MapParser\Tile\Cache\TileCacheInterface;
-use Arakne\MapParser\Tile\MapCoordinates;
+use Arakne\MapParser\Tile\TileMapCoordinates;
 use GdImage;
 
 use function assert;
@@ -41,7 +41,7 @@ final class WorldMapTileRenderer extends BaseTileRenderer
         );
     }
 
-    private function renderChunk(MapCoordinates $coordinates): ?GdImage
+    private function renderChunk(TileMapCoordinates $coordinates): ?GdImage
     {
         if (!$map = $this->worldMap->chunk($coordinates->x, $coordinates->y)) {
             return null;
