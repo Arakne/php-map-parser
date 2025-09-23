@@ -35,15 +35,20 @@ final readonly class MapStructure
         public int $capabilities = 0,
         public bool $encrypted = false,
 
-        // @todo remove from here
-        public ?string $key = null,
+        // @todo version string
+        /**
+         * List of attachments that will be passed to the MapLoader when parsing the map.
+         *
+         * @var array<object>
+         */
+        public array $attachments = [],
     ) {}
 
     /**
      * Instantiate the {@see Map} object with the given cells.
      *
-     * @param list<Cell> $cells
-     * @param array<object> $attachments
+     * @param list<Cell> $cells List of parsed cells
+     * @param array<object> $attachments Optional attachments that may be used by the map
      *
      * @return Map
      */
@@ -63,11 +68,11 @@ final readonly class MapStructure
      * Parse the SWF file and extract the map structure.
      *
      * @param SwfFile $file The SWF file to parse.
-     * @param string|null $key The decryption key, if the map is encrypted. The key must be encoded in hex.
+     * @param object ...$attachments Optional attachments that may be used during parsing.
      *
      * @return self
      */
-    public static function fromSwfFile(SwfFile $file, ?string $key = null): self
+    public static function fromSwfFile(SwfFile $file, object ...$attachments): self
     {
         // 20ko max
         if (!$file->valid(20_000)) {
@@ -91,7 +96,7 @@ final readonly class MapStructure
             (bool) ($content['bOutdoor'] ?? true),
             (int) ($content['capabilities'] ?? 0),
             encrypted: str_ends_with($file->path, 'X.swf'),
-            key: $key,
+            attachments: $attachments,
         );
     }
 }

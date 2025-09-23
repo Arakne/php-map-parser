@@ -2,6 +2,7 @@
 
 namespace Renderer;
 
+use Arakne\MapParser\Loader\MapKey;
 use Arakne\MapParser\Loader\MapLoader;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\CellShape;
@@ -9,8 +10,6 @@ use Arakne\Swf\SwfFile;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
-
-use function file_get_contents;
 
 class CellShapeTest extends TestCase
 {
@@ -22,8 +21,8 @@ class CellShapeTest extends TestCase
     ]
     public function fromCellIdShouldBehaveSameAsFromMap(string $swf, string $key)
     {
-        $mapStructure = MapStructure::fromSwfFile(new SwfFile($swf), file_get_contents($key));
-        $map = new MapLoader()->load($mapStructure);
+        $mapStructure = MapStructure::fromSwfFile(new SwfFile($swf));
+        $map = new MapLoader()->load($mapStructure, MapKey::fromFile($key));
 
         $allShapes = CellShape::fromMap($map, false);
 
@@ -37,8 +36,8 @@ class CellShapeTest extends TestCase
     #[Test]
     public function fromCellIdXY()
     {
-        $mapStructure = MapStructure::fromSwfFile(new SwfFile(__DIR__ . '/../_files/10302_0709271842X.swf'), file_get_contents(__DIR__ . '/../_files/10302.key'));
-        $map = new MapLoader()->load($mapStructure);
+        $mapStructure = MapStructure::fromSwfFile(new SwfFile(__DIR__ . '/../_files/10302_0709271842X.swf'));
+        $map = new MapLoader()->load($mapStructure, MapKey::fromFile(__DIR__ . '/../_files/10302.key'));
 
         $this->assertSame(0, CellShape::fromCellId($map, 0)->x);
         $this->assertSame(0, CellShape::fromCellId($map, 0)->y);

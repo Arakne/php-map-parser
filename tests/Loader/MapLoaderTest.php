@@ -4,6 +4,7 @@ namespace Arakne\MapParser\Loader;
 
 use Arakne\MapParser\Parser\Cell;
 use Arakne\Swf\SwfFile;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -57,8 +58,8 @@ class MapLoaderTest extends TestCase
         $map = $this->loader->load(
             MapStructure::fromSwfFile(
                 new SwfFile(__DIR__.'/../_files/10302_0709271842X.swf'),
-                file_get_contents(__DIR__.'/../_files/10302.key')
             ),
+            MapKey::fromFile(__DIR__.'/../_files/10302.key'),
         );
 
         $this->assertEquals(10302, $map->id);
@@ -66,5 +67,17 @@ class MapLoaderTest extends TestCase
         $this->assertEquals(17, $map->height);
         $this->assertCount(479, $map->cells);
         $this->assertContainsOnlyInstancesOf(Cell::class, $map->cells);
+    }
+
+    #[Test]
+    public function test_load_encrypted_missing_key()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->loader->load(
+            MapStructure::fromSwfFile(
+                new SwfFile(__DIR__.'/../_files/10302_0709271842X.swf'),
+            ),
+        );
     }
 }

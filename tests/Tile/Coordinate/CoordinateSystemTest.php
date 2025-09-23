@@ -3,6 +3,7 @@
 namespace Tile\Coordinate;
 
 use Arakne\MapParser\Loader\MapCoordinates;
+use Arakne\MapParser\Loader\MapKey;
 use Arakne\MapParser\Loader\MapLoader;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\MapRenderer;
@@ -70,9 +71,9 @@ class CoordinateSystemTest extends TestCase
         $map = new MapLoader()->load(
             MapStructure::fromSwfFile(
                 new SwfFile(__DIR__ . '/../../_files/10332_0706131721X.swf'),
-                file_get_contents(__DIR__ . '/../../_files/10332.key'),
             ),
             new MapCoordinates(4, 4),
+            MapKey::fromFile(__DIR__ . '/../../_files/10332.key'),
         );
 
         $latLong = $system->cellToLatLong($map, 42);
@@ -101,8 +102,8 @@ class CoordinateSystemTest extends TestCase
         $map = new MapLoader()->load(
             MapStructure::fromSwfFile(
                 new SwfFile(__DIR__ . '/../../_files/10332_0706131721X.swf'),
-                file_get_contents(__DIR__ . '/../../_files/10332.key'),
             ),
+            MapKey::fromFile(__DIR__ . '/../../_files/10332.key'),
             new MapCoordinates(150, -40),
         );
 
@@ -129,8 +130,8 @@ class CoordinateSystemTest extends TestCase
         $map = new MapLoader()->load(
             MapStructure::fromSwfFile(
                 new SwfFile(__DIR__ . '/../../_files/10332_0706131721X.swf'),
-                file_get_contents(__DIR__ . '/../../_files/10332.key'),
             ),
+            MapKey::fromFile(__DIR__ . '/../../_files/10332.key'),
             new MapCoordinates(4, 4),
         );
 

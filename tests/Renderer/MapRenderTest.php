@@ -4,6 +4,7 @@
 namespace Arakne\MapParser\Renderer;
 
 use Arakne\MapParser\Loader\Map;
+use Arakne\MapParser\Loader\MapKey;
 use Arakne\MapParser\Loader\MapLoader;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Parser\CellDataParser;
@@ -75,10 +76,10 @@ class MapRenderTest extends TestCase
     #[Test]
     public function renderBiggerDimensions()
     {
-        $map = new MapLoader()->load(MapStructure::fromSwfFile(
-            new SwfFile(__DIR__ .'/../_files/4208_0706131721X.swf'),
-            file_get_contents(__DIR__ .'/../_files/4208.key'),
-        ));
+        $map = new MapLoader()->load(
+            MapStructure::fromSwfFile(new SwfFile(__DIR__ .'/../_files/4208_0706131721X.swf')),
+            MapKey::fromFile(__DIR__ .'/../_files/4208.key'),
+        );
 
         $img = $this->renderer->render($map);
 
@@ -94,10 +95,10 @@ class MapRenderTest extends TestCase
     #[Test]
     public function renderSmallerDimensions()
     {
-        $map = new MapLoader()->load(MapStructure::fromSwfFile(
-            new SwfFile(__DIR__ .'/../_files/703_0706131721X.swf'),
-            file_get_contents(__DIR__ .'/../_files/703.key'),
-        ));
+        $map = new MapLoader()->load(
+            MapStructure::fromSwfFile(new SwfFile(__DIR__ .'/../_files/703_0706131721X.swf')),
+            MapKey::fromFile(__DIR__ .'/../_files/703.key'),
+        );
 
         $img = $this->renderer->render($map);
 

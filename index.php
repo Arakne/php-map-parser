@@ -2,6 +2,7 @@
 
 use Arakne\MapParser\Loader\Map;
 use Arakne\MapParser\Loader\MapCoordinates;
+use Arakne\MapParser\Loader\MapKey;
 use Arakne\MapParser\Loader\MapLoader;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\CellShape;
@@ -67,7 +68,7 @@ $amaknaRenderer = new CombinedWorldMapTileRenderer(
             return null;
         }
 
-        return MapStructure::fromSwfFile(new SwfFile($mapFile), $map['key']);
+        return MapStructure::fromSwfFile(new SwfFile($mapFile), new MapKey($map['key']));
     },
     minZoomLevel: 7,
     cache: new SqliteCache($cacheDir . '/amakna.db')
@@ -104,7 +105,7 @@ $incarnamRenderer = new CombinedWorldMapTileRenderer(
             return null;
         }
 
-        return MapStructure::fromSwfFile(new SwfFile($mapFile), $map['key']);
+        return MapStructure::fromSwfFile(new SwfFile($mapFile), new MapKey($map['key']));
     },
     minZoomLevel: 6,
     cache: new SqliteCache($cacheDir . '/incarnam.db')
@@ -145,14 +146,20 @@ function incarnamMapsInBounds(Bounds $bounds): array
 
         if (is_file($mapFile)) {
             $loaded[$map['id']] = $loader->load(
-                MapStructure::fromSwfFile(new SwfFile($mapFile), $map['key']),
-                new MapCoordinates($map['MAP_X'], $map['MAP_Y'])
+                MapStructure::fromSwfFile(new SwfFile($mapFile)),
+                new MapCoordinates($map['MAP_X'], $map['MAP_Y']),
+                new MapKey($map['key']),
             );
         }
     }
 
     return $loaded;
 }
+
+/**
+ * @param Bounds $bounds
+ * @return array<int, Map>
+ */
 function amaknaMapsInBounds(Bounds $bounds): array
 {
     global $dofusMapsDir;
@@ -176,17 +183,22 @@ function amaknaMapsInBounds(Bounds $bounds): array
     $stmt->execute();
 
     $maps = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $structures = [];
+    $loader = new MapLoader();
+    $loadedMaps = [];
 
     foreach ($maps as $map) {
         $mapFile = $dofusMapsDir . '/' . $map['id'] . '_' . $map['date'] . ($map['key'] ? 'X' : '') . '.swf';
 
         if (is_file($mapFile)) {
-            $structures[] = MapStructure::fromSwfFile(new SwfFile($mapFile), $map['key']);
+            $loadedMaps[$map['id']] = $loader->load(
+                MapStructure::fromSwfFile(new SwfFile($mapFile)),
+                new MapCoordinates($map['MAP_X'], $map['MAP_Y']),
+                new MapKey($map['key']),
+            );
         }
     }
 
-    return $structures;
+    return $loadedMaps;
 }
 
 function loadTriggers(array $mapIds): array
@@ -303,40 +315,23 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
             $bbox = LatLongBounds::fromString($request->get('bbox'));
             $bounds = $amaknaRenderer->coordinate->toMapBounds($bbox);
             $maps = amaknaMapsInBounds($bounds);
-            $triggers = loadTriggers(array_map(fn (MapStructure $m) => $m->id, $maps));
-
-            $loadedMaps = [];
-
-            foreach ($maps as $map) {
-                $loadedMaps[$map->id] = new MapLoader()->load($map);
-            }
-
+            $triggers = loadTriggers(array_map(fn (Map $m) => $m->id, $maps));
             $points = [];
 
             foreach ($triggers as $mapId => $triggersOnMap) {
                 foreach ($triggersOnMap as $trigger) {
                     $cellId = (int) $trigger['CELL_ID'];
-                    $triggerCell = CellShape::fromCellId($loadedMaps[$mapId], $cellId);
+                    $triggerCell = $amaknaRenderer->coordinate->cellToLatLong($maps[$mapId], $cellId);
 
                     if (!$triggerCell) {
                         continue;
                     }
 
-                    [$mapX, $mapY] = mapCoordinates($mapId);
-
-                    $mapX -= $amaknaRenderer->bounds->xMin;
-                    $mapY -= $amaknaRenderer->bounds->yMin;
-                    $mapX *= MapRenderer::DISPLAY_WIDTH;
-                    $mapY *= MapRenderer::DISPLAY_HEIGHT;
-
-                    $pointInPixelX = ($mapX + $triggerCell->x) * 16 / 15;
-                    $pointInPixelY = ($mapY + $triggerCell->y) * 16 / 15;
-
                     $points[] = [
                         'type' => 'Feature',
                         'geometry' => [
                             'type' => 'Point',
-                            'coordinates' => pixelsToLongLat($pointInPixelX, $pointInPixelY, $amaknaRenderer->maxZoom),
+                            'coordinates' => [$triggerCell->longitude, $triggerCell->latitude],
                         ],
                         'properties' => [
                             'id' => $trigger['TRIGGER_ID'],
@@ -376,8 +371,47 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
                 return;
             }
 
-            $map = MapStructure::fromSwfFile(new SwfFile($mapFile), $map['key']);
-            $map = new MapLoader()->load($map);
+            $map = new MapLoader()->load(MapStructure::fromSwfFile(new SwfFile($mapFile)), new MapKey($map['key']));
+
+            $triggers = array_map(function ($trigger) use ($map) {
+                $cell = CellShape::fromCellId($map, (int)$trigger['CELL_ID']);
+
+                return [
+                    'x' => $cell->x,
+                    'y' => $cell->y,
+                    'target' => (int) explode(',', $trigger['ARGUMENTS'])[0],
+                ];
+            }, loadTriggers([$mapId])[$mapId] ?? []);
+
+            $width = MapRenderer::DISPLAY_WIDTH;
+            $height = MapRenderer::DISPLAY_HEIGHT;
+
+            ob_start();
+            require __DIR__ . '/map.html.php';
+            $content = ob_get_clean();
+
+            $connection->send(new Response(body: $content));
+            return;
+
+        case '/render':
+            $mapId = (int) $request->get('id', 0);
+            $pdo = new PDO('mysql:host=127.0.0.1;dbname=araknemu', 'araknemu', 'araknemu');
+            $stmt = $pdo->prepare('SELECT * FROM maps WHERE id = ?');
+            $stmt->execute([$mapId]);
+            $map = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$map) {
+                $connection->send(new Response(404, body: 'Map not found'));
+                return;
+            }
+
+            $mapFile = $dofusMapsDir . '/' . $map['id'] . '_' . $map['date'] . ($map['key'] ? 'X' : '') . '.swf';
+
+            if (!is_file($mapFile)) {
+                $connection->send(new Response(404, body: 'Map not found'));
+                return;
+            }
+
+            $map = new MapLoader()->load(MapStructure::fromSwfFile(new SwfFile($mapFile)), new MapKey($map['key']));
 
             ob_start();
             imagepng($mapRenderer->render($map));

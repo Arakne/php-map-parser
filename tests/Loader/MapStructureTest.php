@@ -15,10 +15,7 @@ class MapStructureTest extends TestCase
     #[Test]
     public function fromSwfFile_valid()
     {
-        $map = MapStructure::fromSwfFile(
-            new SwfFile(__DIR__.'/../_files/10302_0709271842X.swf'),
-            $key = file_get_contents(__DIR__.'/../_files/10302.key')
-        );
+        $map = MapStructure::fromSwfFile(new SwfFile(__DIR__.'/../_files/10302_0709271842X.swf'));
 
         $this->assertSame(10302, $map->id);
         $this->assertSame(15, $map->width);
@@ -29,7 +26,6 @@ class MapStructureTest extends TestCase
         $this->assertTrue($map->outdoor);
         $this->assertSame(78, $map->capabilities);
         $this->assertSame(file_get_contents(__DIR__.'/../_files/10302.data'), $map->data);
-        $this->assertSame($key, $map->key);
         $this->assertTrue($map->encrypted);
     }
 

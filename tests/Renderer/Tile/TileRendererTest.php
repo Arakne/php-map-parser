@@ -2,6 +2,7 @@
 
 namespace Renderer\Tile;
 
+use Arakne\MapParser\Loader\MapKey;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Renderer\MapRendererInterface;
@@ -205,7 +206,7 @@ class TileRendererTest extends TestCase
 
                 return MapStructure::fromSwfFile(
                     new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
-                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                    MapKey::fromFile(__DIR__ . '/../../_files/' . $mapId . '.key'),
                 );
             },
             new Bounds(
@@ -241,7 +242,7 @@ class TileRendererTest extends TestCase
 
                 return MapStructure::fromSwfFile(
                     new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
-                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                    MapKey::fromFile(__DIR__ . '/../../_files/' . $mapId . '.key'),
                 );
             },
             new Bounds(
@@ -279,7 +280,7 @@ class TileRendererTest extends TestCase
 
                 return MapStructure::fromSwfFile(
                     new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
-                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                    MapKey::fromFile(__DIR__ . '/../../_files/' . $mapId . '.key'),
                 );
             },
             new Bounds(
@@ -316,7 +317,7 @@ class TileRendererTest extends TestCase
 
                     return MapStructure::fromSwfFile(
                         new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
-                        file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                        MapKey::fromFile(__DIR__ . '/../../_files/' . $mapId . '.key'),
                     );
                 },
                 new Bounds(
@@ -353,7 +354,7 @@ class TileRendererTest extends TestCase
 
                 return MapStructure::fromSwfFile(
                     new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
-                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                    MapKey::fromFile(__DIR__ . '/../../_files/' . $mapId . '.key'),
                 );
             },
             new Bounds(
@@ -403,7 +404,7 @@ class TileRendererTest extends TestCase
 
                 return MapStructure::fromSwfFile(
                     new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
-                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                    MapKey::fromFile(__DIR__ . '/../../_files/' . $mapId . '.key'),
                 );
             },
             new Bounds(
@@ -441,7 +442,7 @@ class TileRendererTest extends TestCase
 
                 return MapStructure::fromSwfFile(
                     new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
-                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                    MapKey::fromFile(__DIR__ . '/../../_files/' . $mapId . '.key'),
                 );
             },
             new Bounds(
@@ -526,7 +527,7 @@ class TileRendererTest extends TestCase
 
                 return MapStructure::fromSwfFile(
                     new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
-                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                    MapKey::fromFile(__DIR__ . '/../../_files/' . $mapId . '.key')
                 );
             },
             new Bounds(
@@ -600,7 +601,7 @@ class TileRendererTest extends TestCase
 
                 return MapStructure::fromSwfFile(
                     new SwfFile(glob(__DIR__ . '/../../_files/' . $mapId . '*.swf')[0]),
-                    file_get_contents(__DIR__ . '/../../_files/' . $mapId . '.key')
+                    MapKey::fromFile(__DIR__ . '/../../_files/' . $mapId . '.key')
                 );
             },
             new Bounds(

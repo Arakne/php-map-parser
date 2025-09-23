@@ -2,6 +2,7 @@
 
 namespace WorldMap;
 
+use Arakne\MapParser\Loader\MapKey;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
@@ -76,7 +77,7 @@ class CombinedWorldMapTileRendererTest extends TestCase
 
                 return MapStructure::fromSwfFile(
                     new SwfFile(glob(__DIR__ . '/../_files/' . $mapId . '*.swf')[0]),
-                    file_get_contents(__DIR__ . '/../_files/' . $mapId . '.key')
+                    MapKey::fromFile(__DIR__ . '/../_files/' . $mapId . '.key'),
                 );
             },
             4,
