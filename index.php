@@ -1,5 +1,6 @@
 <?php
 
+use Arakne\MapParser\DofusMapParser;
 use Arakne\MapParser\Loader\Map;
 use Arakne\MapParser\Loader\MapCoordinates;
 use Arakne\MapParser\Loader\MapKey;
@@ -7,15 +8,9 @@ use Arakne\MapParser\Loader\MapLoader;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\CellShape;
 use Arakne\MapParser\Renderer\MapRenderer;
-use Arakne\MapParser\Renderer\TileRenderer;
-use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Tile\Cache\SqliteCache;
-use Arakne\MapParser\Tile\Coordinate\CoordinateSystem;
-use Arakne\MapParser\Tile\Coordinate\LatLongBounds;
 use Arakne\MapParser\Tile\Coordinate\Bounds;
-use Arakne\MapParser\Tile\TileMapCoordinates;
-use Arakne\MapParser\WorldMap\CombinedWorldMapTileRenderer;
-use Arakne\MapParser\WorldMap\SwfWorldMap;
+use Arakne\MapParser\Tile\Coordinate\LatLongBounds;
 use Arakne\Swf\SwfFile;
 use Workerman\Connection\TcpConnection;
 use Workerman\Protocols\Http\Request;
@@ -31,21 +26,17 @@ $pdo = new PDO('mysql:host=127.0.0.1;dbname=araknemu', 'araknemu', 'araknemu');
 $cacheDir = __DIR__.'/cache';
 $dofusClipsDir = __DIR__.'/gfx';
 $dofusMapsDir = '/srv/www/htdocs/dofus/dofus_officiel/maps';
+$dofusClientDir = '/home/vincent/.local/app/Dofus';
 
-$mapRenderer = new MapRenderer(
-    new SwfSpriteRepository(glob($dofusClipsDir.'/g*.swf')),
-    new SwfSpriteRepository(glob($dofusClipsDir.'/o*.swf'))
-);
-
-$amaknaRenderer = new CombinedWorldMapTileRenderer(
-    new SwfWorldMap(new SwfFile(__DIR__.'/maps/0.swf')),
-    $mapRenderer,
-    function (TileMapCoordinates $coordinates) use($dofusMapsDir) {
+$dmp = new DofusMapParser(
+    dofusPath: $dofusClientDir,
+    mapsPath: $dofusMapsDir,
+    mapByCoordinates: function (MapCoordinates $coordinates, int $superAreaId) use ($dofusMapsDir) {
         $query = <<<'SQL'
             SELECT * FROM maps 
             WHERE MAP_X = ? AND MAP_Y = ?
             AND INDOOR = 0
-            AND SUBAREA_ID IN (SELECT SUBAREA_ID FROM SUBAREA WHERE AREA_ID IN (SELECT AREA_ID FROM AREA WHERE SUPERAREA_ID = 0))
+            AND SUBAREA_ID IN (SELECT SUBAREA_ID FROM SUBAREA WHERE AREA_ID IN (SELECT AREA_ID FROM AREA WHERE SUPERAREA_ID = ?))
             SQL
         ;
 
@@ -54,6 +45,7 @@ $amaknaRenderer = new CombinedWorldMapTileRenderer(
         $stmt = $pdo->prepare($query);
         $stmt->bindValue(1, $coordinates->x, PDO::PARAM_INT);
         $stmt->bindValue(2, $coordinates->y, PDO::PARAM_INT);
+        $stmt->bindValue(3, $superAreaId, PDO::PARAM_INT);
         $stmt->execute();
 
         $map = $stmt->fetch();
@@ -68,48 +60,35 @@ $amaknaRenderer = new CombinedWorldMapTileRenderer(
             return null;
         }
 
-        return MapStructure::fromSwfFile(new SwfFile($mapFile), new MapKey($map['key']));
+        return MapStructure::fromSwfFile(new SwfFile($mapFile), new MapKey($map['key']), new MapCoordinates($map['MAP_X'], $map['MAP_Y'], $map['SUBAREA_ID']));
     },
-    minZoomLevel: 7,
-    cache: new SqliteCache($cacheDir . '/amakna.db')
+    tileCache: new SqliteCache($cacheDir . '/tiles.db'),
+    attachmentsProviders: [
+        function (MapStructure $map) {
+            if ($map->attachments) {
+                return [];
+            }
+
+            $query = 'SELECT * FROM maps WHERE id = ?';
+            $pdo = new PDO('mysql:host=127.0.0.1;dbname=araknemu', 'araknemu', 'araknemu');
+
+            $stmt = $pdo->prepare($query);
+            $stmt->bindValue(1, $map->id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $map = $stmt->fetch();
+
+            if (!$map) {
+                return [];
+            }
+
+            return [new MapKey($map['key']), new MapCoordinates($map['MAP_X'], $map['MAP_Y'], $map['SUBAREA_ID'])];
+        }
+    ]
 );
 
-$incarnamRenderer = new CombinedWorldMapTileRenderer(
-    new SwfWorldMap(new SwfFile(__DIR__.'/maps/3.swf')),
-    $mapRenderer,
-    function (TileMapCoordinates $coordinates) use($dofusMapsDir) {
-        $query = <<<'SQL'
-            SELECT * FROM maps 
-            WHERE MAP_X = ? AND MAP_Y = ?
-            AND INDOOR = 0
-            AND SUBAREA_ID IN (SELECT SUBAREA_ID FROM SUBAREA WHERE AREA_ID IN (SELECT AREA_ID FROM AREA WHERE SUPERAREA_ID = 3))
-            SQL
-        ;
-
-        $pdo = new PDO('mysql:host=127.0.0.1;dbname=araknemu', 'araknemu', 'araknemu');
-
-        $stmt = $pdo->prepare($query);
-        $stmt->bindValue(1, $coordinates->x, PDO::PARAM_INT);
-        $stmt->bindValue(2, $coordinates->y, PDO::PARAM_INT);
-        $stmt->execute();
-
-        $map = $stmt->fetch();
-
-        if (!$map) {
-            return null;
-        }
-
-        $mapFile = $dofusMapsDir . '/' . $map['id'] . '_' . $map['date'] . ($map['key'] ? 'X' : '') . '.swf';
-
-        if (!is_file($mapFile)) {
-            return null;
-        }
-
-        return MapStructure::fromSwfFile(new SwfFile($mapFile), new MapKey($map['key']));
-    },
-    minZoomLevel: 6,
-    cache: new SqliteCache($cacheDir . '/incarnam.db')
-);
+$amaknaRenderer = $dmp->amaknaWorldMap(7);
+$incarnamRenderer = $dmp->incarnamWorldMap(6);
 
 /**
  * @param Bounds $bounds
@@ -215,19 +194,6 @@ function loadTriggers(array $mapIds): array
     return $triggers;
 }
 
-function mapCoordinates(int $mapId): array
-{
-    $pdo = new PDO('mysql:host=127.0.0.1;dbname=araknemu', 'araknemu', 'araknemu');
-    $stmt = $pdo->prepare('SELECT * FROM maps WHERE id = ?');
-    $stmt->execute([$mapId]);
-    $map = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$map) {
-        throw new RuntimeException('Map not found: ' . $mapId);
-    }
-
-    return [(int)$map['MAP_X'], (int)$map['MAP_Y']];
-}
-
 if (($argv[1] ?? null) === 'warmup') {
     echo "Warming up Amakna...\n";
     $amaknaRenderer->warmup(
@@ -248,7 +214,8 @@ if (($argv[1] ?? null) === 'warmup') {
 $worker = new \Workerman\Worker('http://0.0.0.0:5000');
 $worker->count = 16;
 
-$worker->onMessage = function (TcpConnection $connection, Request $request) use ($dofusMapsDir, $mapRenderer, $amaknaRenderer, $incarnamRenderer): void {
+$worker->onMessage = function (TcpConnection $connection, Request $request) use ($dofusMapsDir, $amaknaRenderer, $incarnamRenderer): void {
+    global $dmp;
     switch ($request->path()) {
         case '/':
         case '/amakna':
@@ -310,6 +277,7 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
                     ],
                 ]),
             ));
+            return;
 
         case '/markers/amakna':
             $bbox = LatLongBounds::fromString($request->get('bbox'));
@@ -352,26 +320,11 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
                     ],
                 ]),
             ));
+            return;
 
         case '/showmap':
             $mapId = (int) $request->get('id', 0);
-            $pdo = new PDO('mysql:host=127.0.0.1;dbname=araknemu', 'araknemu', 'araknemu');
-            $stmt = $pdo->prepare('SELECT * FROM maps WHERE id = ?');
-            $stmt->execute([$mapId]);
-            $map = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$map) {
-                $connection->send(new Response(404, body: 'Map not found'));
-                return;
-            }
-
-            $mapFile = $dofusMapsDir . '/' . $map['id'] . '_' . $map['date'] . ($map['key'] ? 'X' : '') . '.swf';
-
-            if (!is_file($mapFile)) {
-                $connection->send(new Response(404, body: 'Map not found'));
-                return;
-            }
-
-            $map = new MapLoader()->load(MapStructure::fromSwfFile(new SwfFile($mapFile)), new MapKey($map['key']));
+            $map = $dmp->load($mapId);
 
             $triggers = array_map(function ($trigger) use ($map) {
                 $cell = CellShape::fromCellId($map, (int)$trigger['CELL_ID']);
@@ -395,26 +348,11 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
 
         case '/render':
             $mapId = (int) $request->get('id', 0);
-            $pdo = new PDO('mysql:host=127.0.0.1;dbname=araknemu', 'araknemu', 'araknemu');
-            $stmt = $pdo->prepare('SELECT * FROM maps WHERE id = ?');
-            $stmt->execute([$mapId]);
-            $map = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$map) {
-                $connection->send(new Response(404, body: 'Map not found'));
-                return;
-            }
 
-            $mapFile = $dofusMapsDir . '/' . $map['id'] . '_' . $map['date'] . ($map['key'] ? 'X' : '') . '.swf';
-
-            if (!is_file($mapFile)) {
-                $connection->send(new Response(404, body: 'Map not found'));
-                return;
-            }
-
-            $map = new MapLoader()->load(MapStructure::fromSwfFile(new SwfFile($mapFile)), new MapKey($map['key']));
+            $rendered = $dmp->render($mapId);
 
             ob_start();
-            imagepng($mapRenderer->render($map));
+            imagepng($rendered);
             $imageData = ob_get_clean();
 
             $connection->send(new Response(
@@ -445,35 +383,5 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
         )
     );
 };
-
-function latLongToLeaflet(float $lat, float $long, int $zoom): array
-{
-    $latRad = deg2rad($lat);
-    $n = 2 ** $zoom;
-    $xTile = (int)(($long + 180.0) / 360.0 * $n);
-    $yTile = (int)((1.0 - log(tan($latRad) + (1 / cos($latRad))) / M_PI) / 2.0 * $n);
-
-    return [$xTile, $yTile];
-}
-
-function leafletToLatLong(int $xTile, int $yTile, int $zoom): array
-{
-    $n = 2 ** $zoom;
-    $lon = $xTile / $n * 360.0 - 180.0;
-    $latRad = atan(sinh(M_PI * (1 - 2 * $yTile / $n)));
-    $lat = rad2deg($latRad);
-
-    return [$lat, $lon];
-}
-
-function pixelsToLongLat(int $pixelX, int $pixelY, int $zoom): array
-{
-    $n = 2 ** $zoom * 256;
-    $lon = $pixelX / $n * 360.0 - 180.0;
-    $latRad = atan(sinh(M_PI * (1 - 2 * $pixelY / $n)));
-    $lat = rad2deg($latRad);
-
-    return [$lon, $lat];
-}
 
 \Workerman\Worker::runAll();

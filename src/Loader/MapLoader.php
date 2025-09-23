@@ -15,7 +15,13 @@ final readonly class MapLoader
 {
     public function __construct(
         private CellDataParser $cellParser = new CellDataParser(),
-        // @todo attachment providers
+
+        /**
+         * List of attachments providers to add to the map
+         *
+         * @var array<callable(MapStructure):list<object>>
+         */
+        private array $attachmentsProviders = [],
     ) {}
 
     /**
@@ -49,7 +55,12 @@ final readonly class MapLoader
      */
     public function load(MapStructure $map, object ...$attachments): Map
     {
+        $attachments[] = $map; // Always add the map structure as attachment
         array_push($attachments, ...array_values($map->attachments));
+
+        foreach ($this->attachmentsProviders as $provider) {
+            array_push($attachments, ...$provider($map));
+        }
 
         $data = $map->data;
 

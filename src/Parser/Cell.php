@@ -4,6 +4,7 @@ namespace Arakne\MapParser\Parser;
 
 use function assert;
 use function count;
+use function in_array;
 
 /**
  * Parsed cell data
@@ -12,6 +13,8 @@ use function count;
  */
 final class Cell
 {
+    public const array TELEPORT_OBJECT_NUMBERS = [1029, 1030];
+
     /**
      * Check if the cell do not block the line of sight
      */
@@ -25,7 +28,7 @@ final class Cell
      * The value is an int in range [0 - 7] :
      *
      * - 0 means not walkable
-     * - 1 means walkable, but not on a road
+     * - 1 is used by interactive objects (the client considers them as walkable, so the cell is clickable, but the server does not allow movement on it)
      * - 2 to 7 means different levels of walkable cells. Bigger is the movement, lower is the weight on pathing
      *
      * @var int<0, 7>
@@ -60,6 +63,14 @@ final class Cell
      */
     public LayerObject2 $layer2 {
         get => $this->layer2 ??= new LayerObject2($this->data);
+    }
+
+    /**
+     * Does the cell contain a teleport object?
+     * True if this cell can be used to change map, false otherwise.
+     */
+    public bool $isTeleport {
+        get => in_array($this->layer1->number, self::TELEPORT_OBJECT_NUMBERS, true) || in_array($this->layer2->number, self::TELEPORT_OBJECT_NUMBERS, true);
     }
 
     /**

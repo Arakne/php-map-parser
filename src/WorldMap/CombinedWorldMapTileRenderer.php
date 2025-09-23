@@ -76,6 +76,7 @@ final readonly class CombinedWorldMapTileRenderer implements TileRendererInterfa
          * The minimum zoom level to render game maps over the world map
          *
          * @var non-negative-int
+         * @todo relative zoom level (if <= 0 use maxZoom + minZoomLevel)
          */
         private int $minZoomLevel,
 

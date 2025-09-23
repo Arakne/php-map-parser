@@ -8,6 +8,7 @@ use InvalidArgumentException;
 
 use function max;
 use function str_ends_with;
+use function substr;
 
 /**
  * Raw map data structure
@@ -16,26 +17,88 @@ use function str_ends_with;
 final readonly class MapStructure
 {
     public function __construct(
+        /**
+         * The map id
+         */
         public int $id,
 
         /**
+         * Width of the map in cells
+         *
+         * The width must be at least 2 cells because the first half of the first cell
+         * and the second half of the last cell are cropped.
+         *
          * @var int<2, max>
          */
         public int $width,
 
         /**
+         * Height of the map in cells
+         *
+         * The width must be at least 2 cells because the first half of the first cell
+         * and the second half of the last cell are cropped.
+         *
          * @var int<2, max>
          */
         public int $height,
+
+        /**
+         * The raw cell data as a string
+         *
+         * In case of encrypted map, this data is hexadecimal encrypted data with a length of width * height * 20 characters.
+         * In case of unencrypted map, this data is a pseudo-Base64" string with a length of width * height * 10 characters.
+         */
         public string $data,
+
+        /**
+         * The background number
+         *
+         * If 0, no background is set.
+         * This number corresponds to a sprite in ground swf files (g*.swf).
+         */
         public int $background = 0,
+
+        /**
+         * The ambiance music id
+         * If 0, no ambiance is set.
+         */
         public int $ambiance = 0,
+
+        /**
+         * The music id
+         * If 0, no music is set.
+         */
         public int $music = 0,
+
+        /**
+         * True if the map is outdoor, false if indoor
+         *
+         * Note: this value is often incorrect in the SWF files, so it should not be trusted.
+         */
         public bool $outdoor = true,
+
+        /**
+         * Map capabilities flags using bitfield
+         */
         public int $capabilities = 0,
+
+        /**
+         * Does the map data is encrypted?
+         *
+         * This is usually determined by the SWF file name, if it ends with "X.swf" it is encrypted.
+         */
         public bool $encrypted = false,
 
-        // @todo version string
+        /**
+         * The version of the map.
+         *
+         * Usually this is an integer string like "0706131721",
+         * but the integer value is not enforced by the client, so it can be any string.
+         *
+         * The version is extracted from the SWF file name, after the "_" and before the ".swf".
+         */
+        public ?string $version = null,
+
         /**
          * List of attachments that will be passed to the MapLoader when parsing the map.
          *
@@ -85,6 +148,14 @@ final readonly class MapStructure
             throw new InvalidArgumentException('SWF file does not contain a valid map structure');
         }
 
+        $encrypted = str_ends_with($file->path, 'X.swf');
+
+        if (($pos = strrpos($file->path, '_')) !== false) {
+            $version = substr($file->path, $pos + 1, $encrypted ? -5 : -4);
+        } else {
+            $version = null;
+        }
+
         return new MapStructure(
             (int) $content['id'],
             max((int) $content['width'], 2),
@@ -95,8 +166,9 @@ final readonly class MapStructure
             (int) ($content['musicId'] ?? 0),
             (bool) ($content['bOutdoor'] ?? true),
             (int) ($content['capabilities'] ?? 0),
-            encrypted: str_ends_with($file->path, 'X.swf'),
-            attachments: $attachments,
+            $encrypted,
+            $version,
+            $attachments,
         );
     }
 }

@@ -27,6 +27,7 @@ class MapStructureTest extends TestCase
         $this->assertSame(78, $map->capabilities);
         $this->assertSame(file_get_contents(__DIR__.'/../_files/10302.data'), $map->data);
         $this->assertTrue($map->encrypted);
+        $this->assertSame('0709271842', $map->version);
     }
 
     #[Test]

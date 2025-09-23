@@ -34,6 +34,13 @@ final class Map
     }
 
     /**
+     * Get the map key (if any)
+     */
+    public ?string $key {
+        get => $this->get(MapKey::class)?->key;
+    }
+
+    /**
      * @param array<object> $attachments
      */
     public function __construct(

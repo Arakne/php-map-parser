@@ -30,6 +30,15 @@ class CellDataParserTest extends TestCase
     }
 
     #[Test]
+    public function teleportCell()
+    {
+        $cells = $this->parser->parse(file_get_contents(__DIR__.'/../_files/10340.data'));
+
+        $this->assertTrue($cells[21]->isTeleport);
+        $this->assertFalse($cells[22]->isTeleport);
+    }
+
+    #[Test]
     public function parse_empty_cell()
     {
         $cell = $this->parser->parse("Hhaaeaaaaa")[0];
