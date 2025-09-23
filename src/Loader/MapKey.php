@@ -32,7 +32,7 @@ final readonly class MapKey
         return XorCipher::fromHexKey($this->key)->decrypt($mapData);
     }
 
-    public function __debugInfo(): ?array
+    public function __debugInfo(): array
     {
         // Disable debug info to avoid leaking the key
         return [];
