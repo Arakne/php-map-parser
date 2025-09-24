@@ -29,6 +29,9 @@ jobs:
             - name: Show GD info
               run: 'php -r "print_r(gd_info());"'
 
+            - name: Remove system libgd
+              run: sudo apt-get remove -y libgd3
+
             - name: Install SVG renderer commands
               run: |
                   sudo apt-get update
