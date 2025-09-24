@@ -7,22 +7,11 @@ use GdImage;
 use function assert;
 use function ceil;
 use function floor;
-use function imageaffine;
-use function imagealphablending;
-use function imagecolorallocatealpha;
-use function imagecopyresized;
 use function imagecreatefromstring;
-use function imagecreatetruecolor;
-use function imagefill;
-use function imagefilledrectangle;
 use function imageflip;
-use function imageistruecolor;
-use function imagerectangle;
 use function imagerotate;
 use function imagesavealpha;
 use function imagescale;
-use function round;
-use function var_dump;
 
 /**
  * Represents a single sprite extracted from gfx SWF files.
