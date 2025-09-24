@@ -161,7 +161,7 @@ final class Sprite
         assert($gd !== false);
 
         // GD rotates counter-clockwise, so negate the rotation
-        $gd = imagerotate($gd, -$rotation * 90, 0);
+        $gd = imagerotate($gd, 360 - $rotation * 90, 0);
         assert($gd !== false);
 
         // 180deg rotation: only change offsets, no need to rescale
