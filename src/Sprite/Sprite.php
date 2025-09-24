@@ -244,6 +244,7 @@ final class Sprite
         imagesavealpha($img, true);
         imagepng($img);
         $data = ob_get_clean();
+        assert($data !== false);
 
         $im = new \Imagick();
         $im->readImageBlob($data);
