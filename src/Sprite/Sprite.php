@@ -3,7 +3,6 @@
 namespace Arakne\MapParser\Sprite;
 
 use GdImage;
-
 use Imagick;
 
 use function assert;
@@ -246,7 +245,7 @@ final class Sprite
         $data = ob_get_clean();
         assert($data !== false);
 
-        $im = new \Imagick();
+        $im = new Imagick();
         $im->readImageBlob($data);
         $im->setImageFormat('png');
         $im->rotateImage('transparent', $angle);
