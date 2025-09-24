@@ -30,7 +30,7 @@ class SpriteTest extends TestCase
         $rotated = $sprite->rotate(1);
 
         imagepng($rotated->gd(), $path = __DIR__ . '/Fixtures/actual_139_r1.png');
-        $this->assertImages($path, __DIR__ . '/Fixtures/139_r1.png');
+        $this->assertImages($path, [__DIR__ . '/Fixtures/139_r1.png', __DIR__ . '/Fixtures/139_r1_deb.png']);
         unlink($path);
 
         $this->assertSame(139, $rotated->id);
