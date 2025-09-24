@@ -32,10 +32,10 @@ class SwfSpriteRepositoryTest extends TestCase
         $this->assertSame(7019, $sprite->id);
         $this->assertTrue($sprite->valid);
         $this->assertSame(SpriteState::Valid, $sprite->state);
-        $this->assertSame(-29, $sprite->offsetX);
-        $this->assertSame(-90, $sprite->offsetY);
-        $this->assertSame(58, $sprite->width);
-        $this->assertSame(106, $sprite->height);
+        $this->assertSame(-29.65, $sprite->offsetX);
+        $this->assertSame(-90.4, $sprite->offsetY);
+        $this->assertSame(58.0, $sprite->width);
+        $this->assertSame(106.0, $sprite->height);
 
         file_put_contents(__DIR__ . '/Fixtures/sprite.png', $sprite->pngData);
         $this->assertImages(
@@ -53,10 +53,10 @@ class SwfSpriteRepositoryTest extends TestCase
         $this->assertSame(555555, $sprite->id);
         $this->assertFalse($sprite->valid);
         $this->assertSame(SpriteState::Missing, $sprite->state);
-        $this->assertSame(0, $sprite->offsetX);
-        $this->assertSame(0, $sprite->offsetY);
-        $this->assertSame(0, $sprite->width);
-        $this->assertSame(0, $sprite->height);
+        $this->assertSame(0.0, $sprite->offsetX);
+        $this->assertSame(0.0, $sprite->offsetY);
+        $this->assertSame(0.0, $sprite->width);
+        $this->assertSame(0.0, $sprite->height);
         $this->assertSame(Sprite::EMPTY_PNG, $sprite->pngData);
     }
 
@@ -68,10 +68,10 @@ class SwfSpriteRepositoryTest extends TestCase
         $this->assertSame(3669, $sprite->id);
         $this->assertFalse($sprite->valid);
         $this->assertSame(SpriteState::Empty, $sprite->state);
-        $this->assertSame(0, $sprite->offsetX);
-        $this->assertSame(0, $sprite->offsetY);
-        $this->assertSame(0, $sprite->width);
-        $this->assertSame(0, $sprite->height);
+        $this->assertSame(0.0, $sprite->offsetX);
+        $this->assertSame(0.0, $sprite->offsetY);
+        $this->assertSame(0.0, $sprite->width);
+        $this->assertSame(0.0, $sprite->height);
         $this->assertSame(Sprite::EMPTY_PNG, $sprite->pngData);
     }
 }

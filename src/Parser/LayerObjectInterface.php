@@ -14,6 +14,9 @@ interface LayerObjectInterface
 
     /**
      * The rotation value of the sprite
+     * Multiply by 90 to get the angle in degrees
+     *
+     * @var int<0, 3>
      */
     public int $rotation { get; }
 

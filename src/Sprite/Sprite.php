@@ -5,8 +5,24 @@ namespace Arakne\MapParser\Sprite;
 use GdImage;
 
 use function assert;
+use function ceil;
+use function floor;
+use function imageaffine;
+use function imagealphablending;
+use function imagecolorallocatealpha;
+use function imagecopyresized;
 use function imagecreatefromstring;
+use function imagecreatetruecolor;
+use function imagefill;
+use function imagefilledrectangle;
 use function imageflip;
+use function imageistruecolor;
+use function imagerectangle;
+use function imagerotate;
+use function imagesavealpha;
+use function imagescale;
+use function round;
+use function var_dump;
 
 /**
  * Represents a single sprite extracted from gfx SWF files.
@@ -42,29 +58,29 @@ final class Sprite
          * The width of the sprite in pixels.
          * Note: SWF are in twips (1/20th of a pixel), but here we use pixels, so this value is 1/20th of the SWF value.
          *
-         * @var non-negative-int
+         * This value must be non-negative.
          */
-        public readonly int $width,
+        public readonly float $width,
 
         /**
          * The height of the sprite in pixels.
          * Note: SWF are in twips (1/20th of a pixel), but here we use pixels, so this value is 1/20th of the SWF value.
          *
-         * @var non-negative-int
+         * This value must be non-negative.
          */
-        public readonly int $height,
+        public readonly float $height,
 
         /**
          * The X offset of the sprite in pixels.
          * This value can be negative.
          */
-        public readonly int $offsetX,
+        public readonly float $offsetX,
 
         /**
          * The Y offset of the sprite in pixels.
          * This value can be negative.
          */
-        public readonly int $offsetY,
+        public readonly float $offsetY,
 
         /**
          * State of the sprite.
@@ -81,8 +97,15 @@ final class Sprite
      */
     public function gd(): GdImage
     {
-        // @phpstan-ignore assign.propertyType, return.type
-        return $this->gd ??= imagecreatefromstring($this->pngData);
+        if ($this->gd) {
+            return $this->gd;
+        }
+
+        $gd = imagecreatefromstring($this->pngData);
+        assert($gd !== false);
+        imagesavealpha($gd, true);
+
+        return $gd;
     }
 
     /**
@@ -134,5 +157,72 @@ final class Sprite
             offsetY: 0,
             state: $state,
         );
+    }
+
+    /**
+     * Create a new sprite with the rotation applied.
+     *
+     * @param int<1, 3> $rotation Rotation in counts of quarter turns (90 degrees), clockwise.
+     *
+     * @return self
+     */
+    public function rotate(int $rotation): self
+    {
+        $gd = imagecreatefromstring($this->pngData);
+        assert($gd !== false);
+
+        // GD rotates counter-clockwise, so negate the rotation
+        $gd = imagerotate($gd, -$rotation * 90, 0);
+        assert($gd !== false);
+
+        // 180deg rotation: only change offsets, no need to rescale
+        if ($rotation === 2) {
+            $sprite = new self(
+                id: $this->id,
+                pngData: self::EMPTY_PNG,
+                width: $this->width,
+                height: $this->height,
+                offsetX: - $this->offsetX - $this->width,
+                offsetY: - $this->offsetY - $this->height,
+                state: $this->state,
+            );
+
+            imagesavealpha($gd, true);
+            $sprite->gd = $gd;
+
+            return $sprite;
+        }
+
+        $width = ceil($this->height * 1.9286);
+        $height = ceil($this->width * 0.5185);
+
+        if ($rotation === 1) {
+            // 90deg rotation
+            $offsetX = ceil($this->offsetY * -1.9286 - $width);
+            $offsetY = floor($this->offsetX * 0.5185);
+        } else {
+            // 270deg rotation
+            $offsetX = floor($this->offsetY * 1.9286);
+            $offsetY = ceil($this->offsetX * -0.5185 - $height);
+        }
+
+        // IMG_BESSEL shows the best results
+        $gd = imagescale($gd, (int) $width, (int) $height, IMG_BESSEL);
+        assert($gd !== false);
+
+        $sprite = new self(
+            id: $this->id,
+            pngData: self::EMPTY_PNG,
+            width: $width,
+            height: $height,
+            offsetX: $offsetX,
+            offsetY: $offsetY,
+            state: $this->state,
+        );
+
+        imagesavealpha($gd, true);
+        $sprite->gd = $gd;
+
+        return $sprite;
     }
 }

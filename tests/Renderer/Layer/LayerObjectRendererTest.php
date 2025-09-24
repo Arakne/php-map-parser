@@ -13,8 +13,11 @@ use Arakne\MapParser\Test\AssertImageTrait;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function imagecolorallocatealpha;
 use function imagecreatetruecolor;
+use function imagefill;
 use function imagepng;
+use function imagesavealpha;
 
 /**
  * Class LayerObjectRendererTest
@@ -58,12 +61,14 @@ class LayerObjectRendererTest extends TestCase
     public function render()
     {
         $img = imagecreatetruecolor(MapRenderer::DISPLAY_WIDTH, MapRenderer::DISPLAY_HEIGHT);
+        imagesavealpha($img, true);
+        imagefill($img, 0, 0, imagecolorallocatealpha($img, 0, 0, 0, 127));
 
         $this->renderer->render($this->map, $this->cells, $img);
 
         imagepng($img, $path = __DIR__.'/../_files/layer.png');
 
-        $this->assertImages(__DIR__.'/../_files/10340-ground.png', $path, 0.011);
+        $this->assertImages(__DIR__.'/../_files/10340-ground.png', $path);
         unlink($path);
     }
 }

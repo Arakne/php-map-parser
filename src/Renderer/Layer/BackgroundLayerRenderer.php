@@ -29,7 +29,7 @@ final readonly class BackgroundLayerRenderer implements LayerRendererInterface
         $bg = $this->repository->get($map->background);
 
         if ($bg->valid) {
-            imagecopy($out, $bg->gd(), $bg->offsetX, $bg->offsetY, 0, 0, $bg->width, $bg->height);
+            imagecopy($out, $bg->gd(), (int) $bg->offsetX, (int) $bg->offsetY, 0, 0, (int) $bg->width, (int) $bg->height);
         }
     }
 }

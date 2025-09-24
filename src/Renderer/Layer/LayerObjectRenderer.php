@@ -48,6 +48,10 @@ final readonly class LayerObjectRenderer implements LayerRendererInterface
             return;
         }
 
+        if ($object->rotation !== 0) {
+            $sprite = $sprite->rotate($object->rotation);
+        }
+
         if ($object->flip) {
             $sprite = $sprite->flip();
         }
@@ -56,7 +60,7 @@ final readonly class LayerObjectRenderer implements LayerRendererInterface
         $y = $cell->y + $sprite->offsetY;
         $x = $cell->x + $sprite->offsetX;
 
-        imagecopy($out, $img, $x, $y, 0, 0, $sprite->width, $sprite->height);
+        imagecopy($out, $img, (int) $x, (int) $y, 0, 0, (int) $sprite->width, (int) $sprite->height);
     }
 
     /**

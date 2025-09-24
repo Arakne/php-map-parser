@@ -8,6 +8,7 @@ use Arakne\Swf\Extractor\SwfExtractor;
 use Arakne\Swf\SwfFile;
 use Override;
 
+use function floor;
 use function is_numeric;
 
 /**
@@ -70,8 +71,8 @@ final class SwfSpriteRepository implements SpriteRepositoryInterface
             $bounds = $sprite->bounds();
             $converter = new Converter();
 
-            $width = (int) ($bounds->width() / 20);
-            $height = (int) ($bounds->height() / 20);
+            $width = ($bounds->width() / 20);
+            $height = ($bounds->height() / 20);
 
             if ($width < 1 || $height < 1) {
                 // Less than 1px
@@ -83,8 +84,8 @@ final class SwfSpriteRepository implements SpriteRepositoryInterface
                 pngData: $converter->toPng($sprite),
                 width: $width,
                 height: $height,
-                offsetX: (int) ($bounds->xmin / 20),
-                offsetY: (int) ($bounds->ymin / 20),
+                offsetX: ($bounds->xmin / 20),
+                offsetY: ($bounds->ymin / 20),
                 state: SpriteState::Valid,
             );
         } finally {

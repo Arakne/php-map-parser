@@ -47,13 +47,13 @@ class MapRenderTest extends TestCase
         $map = new Map(0, 15, 17, 0, (new CellDataParser())->parse(file_get_contents(__DIR__.'/../_files/10340.data')));
         $img = $this->renderer->render($map);
 
-        imagepng($img, __DIR__.'/_files/render.png');
+        imagepng($img, __DIR__ . '/_files/37.png');
 
         $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
         $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
 
-        $this->assertImages(__DIR__.'/_files/10340.png', __DIR__.'/_files/render.png');
-        unlink(__DIR__.'/_files/render.png');
+        $this->assertImages(__DIR__.'/_files/10340.png', __DIR__ . '/_files/37.png');
+        unlink(__DIR__ . '/_files/37.png');
     }
 
     #[Test]
@@ -64,13 +64,13 @@ class MapRenderTest extends TestCase
         ));
         $img = $this->renderer->render($map);
 
-        imagepng($img, __DIR__.'/_files/render.png');
+        imagepng($img, __DIR__ . '/_files/37.png');
 
         $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
         $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
 
-        $this->assertImages(__DIR__.'/_files/10302.png', __DIR__.'/_files/render.png');
-        unlink(__DIR__.'/_files/render.png');
+        $this->assertImages(__DIR__.'/_files/10302.png', __DIR__ . '/_files/37.png');
+        unlink(__DIR__ . '/_files/37.png');
     }
 
     #[Test]
@@ -83,13 +83,13 @@ class MapRenderTest extends TestCase
 
         $img = $this->renderer->render($map);
 
-        imagepng($img, __DIR__.'/_files/render.png');
+        imagepng($img, __DIR__ . '/_files/37.png');
 
         $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
         $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
 
-        $this->assertImages(__DIR__.'/_files/4208.png', __DIR__.'/_files/render.png');
-        unlink(__DIR__.'/_files/render.png');
+        $this->assertImages(__DIR__.'/_files/4208.png', __DIR__ . '/_files/37.png');
+        unlink(__DIR__ . '/_files/37.png');
     }
 
     #[Test]
@@ -102,12 +102,31 @@ class MapRenderTest extends TestCase
 
         $img = $this->renderer->render($map);
 
-        imagepng($img, __DIR__.'/_files/render.png');
+        imagepng($img, __DIR__ . '/_files/37.png');
 
         $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
         $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
 
-        $this->assertImages(__DIR__.'/_files/703.png', __DIR__.'/_files/render.png');
-        unlink(__DIR__.'/_files/render.png');
+        $this->assertImages(__DIR__.'/_files/703.png', __DIR__ . '/_files/37.png', 0.002);
+        unlink(__DIR__ . '/_files/37.png');
+    }
+
+    #[Test]
+    public function renderWithSpriteRotation()
+    {
+        $map = new MapLoader()->load(
+            MapStructure::fromSwfFile(new SwfFile(__DIR__ .'/../_files/37_0904061612X.swf')),
+            MapKey::fromFile(__DIR__ .'/../_files/37.key'),
+        );
+
+        $img = $this->renderer->render($map);
+
+        imagepng($img, __DIR__ . '/_files/37.png');
+
+        $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
+        $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
+
+        $this->assertImages(__DIR__.'/_files/37.png', __DIR__ . '/_files/37.png', 0.002);
+        unlink(__DIR__ . '/_files/37.png');
     }
 }

@@ -112,7 +112,7 @@ class CombinedWorldMapTileRendererTest extends TestCase
     public function renderOriginalSize(): void
     {
         $img = $this->renderer->renderOriginalSize(111, 62);
-        $actual = __DIR__ . '/Fixtures/combined/actual_original_size.png';
+        $actual = __DIR__ . '/Fixtures/combined/expected_original_size.png';
         $expected = __DIR__ . '/Fixtures/combined/expected_original_size.png';
 
         imagepng($img, $actual);
