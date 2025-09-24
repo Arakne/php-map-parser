@@ -4,9 +4,12 @@ namespace Arakne\MapParser\Sprite;
 
 use GdImage;
 
+use Imagick;
+
 use function assert;
 use function ceil;
 use function floor;
+use function getenv;
 use function imagecreatefromstring;
 use function imageflip;
 use function imagerotate;
@@ -160,9 +163,7 @@ final class Sprite
         $gd = imagecreatefromstring($this->pngData);
         assert($gd !== false);
 
-        // GD rotates counter-clockwise, so negate the rotation
-        $gd = imagerotate($gd, 360 - $rotation * 90, 0);
-        assert($gd !== false);
+        $gd = $this->doRotate($gd, $rotation * 90);
 
         // 180deg rotation: only change offsets, no need to rescale
         if ($rotation === 2) {
@@ -213,5 +214,48 @@ final class Sprite
         $sprite->gd = $gd;
 
         return $sprite;
+    }
+
+    /**
+     * Rotate the image by the given angle, clockwise.
+     *
+     * In some environments GD rotation is broken, so we can fallback to Imagick if needed.
+     * Set the FIX_ROTATE_IMAGICK=1 environment variable to force using Imagick.
+     *
+     * @param GdImage $img The image to rotate
+     * @param int $angle Angle in degrees, clockwise
+     *
+     * @return GdImage
+     */
+    private function doRotate(GdImage $img, int $angle): GdImage
+    {
+        static $useImagick = getenv('FIX_ROTATE_IMAGICK') == '1';
+
+        if (!$useImagick) {
+            // GD rotates counter-clockwise, so negate the rotation
+            $gd = imagerotate($img, 360 - $angle, 0);
+            assert($gd !== false);
+
+            return $gd;
+        }
+
+        // Fallback to Imagick if GD rotation is broken
+        ob_start();
+        imagesavealpha($img, true);
+        imagepng($img);
+        $data = ob_get_clean();
+
+        $im = new \Imagick();
+        $im->readImageBlob($data);
+        $im->setImageFormat('png');
+        $im->rotateImage('transparent', $angle);
+        $im->setImagePage(0, 0, 0, 0);
+        $im->setImageFormat('png');
+
+        $gd = imagecreatefromstring($im->getImageBlob());
+        imagesavealpha($img, true);
+        assert($gd !== false);
+
+        return $gd;
     }
 }
