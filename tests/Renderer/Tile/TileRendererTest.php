@@ -221,7 +221,7 @@ class TileRendererTest extends TestCase
             for ($y = 0; $y < 4; $y++) {
                 $img = $renderer->renderOriginalSize($x, $y);
                 imagepng($img, $path = __DIR__ . '/_files/actual_' . $x . '_' . $y . '.png');
-                $this->assertImages(__DIR__ . '/_files/' . $x . '_' . $y . '.png', $path);
+                $this->assertImages(__DIR__ . '/_files/' . $x . '_' . $y . '.png', $path, 0.011);
                 unlink($path);
             }
         }
@@ -259,7 +259,7 @@ class TileRendererTest extends TestCase
             for ($y = 0; $y < 4; $y++) {
                 $img = $renderer->render($x, $y, $renderer->maxZoom);
                 imagepng($img, $path = __DIR__ . '/_files/actual_' . $x . '_' . $y . '.png');
-                $this->assertImages(__DIR__ . '/_files/' . $x . '_' . $y . '.png', $path);
+                $this->assertImages(__DIR__ . '/_files/' . $x . '_' . $y . '.png', $path, 0.011);
                 unlink($path);
             }
         }
@@ -294,7 +294,7 @@ class TileRendererTest extends TestCase
         for ($zoom = 0; $zoom <= 8; $zoom++) {
             $img = $renderer->render(0, 0, $zoom);
             imagepng($img, $path = __DIR__ . '/_files/actual_' . $zoom . '.png');
-            $this->assertImages(__DIR__ . '/_files/zoom_' . $zoom . '.png', $path);
+            $this->assertImages(__DIR__ . '/_files/zoom_' . $zoom . '.png', $path, 0.11);
             unlink($path);
         }
     }

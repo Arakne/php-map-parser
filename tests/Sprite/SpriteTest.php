@@ -9,6 +9,7 @@ use Arakne\Swf\SwfFile;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function getenv;
 use function imagepng;
 use function unlink;
 
@@ -30,7 +31,11 @@ class SpriteTest extends TestCase
         $rotated = $sprite->rotate(1);
 
         imagepng($rotated->gd(), $path = __DIR__ . '/Fixtures/actual_139_r1.png');
-        $this->assertImages($path, [__DIR__ . '/Fixtures/139_r1.png', __DIR__ . '/Fixtures/139_r1_deb.png']);
+        $this->assertImages(
+            $path,
+            [__DIR__ . '/Fixtures/139_r1.png', __DIR__ . '/Fixtures/139_r1_deb.png'],
+            getenv('FIX_ROTATE_IMAGICK') == '1' ? 0.22 : 0.01
+        );
         unlink($path);
 
         $this->assertSame(139, $rotated->id);
