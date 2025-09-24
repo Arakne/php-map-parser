@@ -17,6 +17,9 @@ jobs:
         steps:
             - uses: actions/checkout@v2
 
+            - name: Remove system libgd & PHP
+              run: sudo apt-get remove -y libgd3 'php*'
+
             - name: Install PHP
               uses: shivammathur/setup-php@v2
               with:
@@ -28,9 +31,6 @@ jobs:
 
             - name: Show GD info
               run: 'php -r "print_r(gd_info());"'
-
-            - name: Remove system libgd & PHP
-              run: sudo apt-get remove -y libgd3 'php*'
 
             - name: Install SVG renderer commands
               run: |
