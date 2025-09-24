@@ -27,7 +27,7 @@ jobs:
               run: php -v
 
             - name: Show GD info
-              run: 'print_r(gd_info());'
+              run: 'php -r "print_r(gd_info());"'
 
             - name: Install SVG renderer commands
               run: |
