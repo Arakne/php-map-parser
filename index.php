@@ -63,6 +63,7 @@ $dmp = new DofusMapParser(
         return MapStructure::fromSwfFile(new SwfFile($mapFile), new MapKey($map['key']), new MapCoordinates($map['MAP_X'], $map['MAP_Y'], $map['SUBAREA_ID']));
     },
     tileCache: new SqliteCache($cacheDir . '/tiles.db'),
+    spriteCache: new \Arakne\MapParser\Sprite\Cache\SqliteSpriteCache($cacheDir . '/sprites.db'),
     attachmentsProviders: [
         function (MapStructure $map) {
             if ($map->attachments) {

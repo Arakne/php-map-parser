@@ -5,6 +5,7 @@ use Arakne\MapParser\DofusMapParser;
 use Arakne\MapParser\Loader\MapCoordinates;
 use Arakne\MapParser\Loader\MapKey;
 use Arakne\MapParser\Loader\MapStructure;
+use Arakne\MapParser\Sprite\Cache\SqliteSpriteCache;
 use Arakne\MapParser\Test\AssertImageTrait;
 use Arakne\MapParser\Tile\Cache\SqliteCache;
 use Arakne\MapParser\Tile\Coordinate\Bounds;
@@ -24,18 +25,21 @@ class DofusMapParserTest extends TestCase
         '3,6' => 10340,
     ];
 
-    private static string $cacheFile;
+    private static string $tileCacheFile;
+    private static string $spriteCacheFile;
 
     private DofusMapParser $parser;
 
     public static function setUpBeforeClass(): void
     {
-        self::$cacheFile = tempnam('/tmp', 'dofusmaptest');
+        self::$tileCacheFile = tempnam('/tmp', 'dofusmaptest');
+        self::$spriteCacheFile = tempnam('/tmp', 'dofusmaptest');
     }
 
     public static function tearDownAfterClass(): void
     {
-        @unlink(self::$cacheFile);
+        @unlink(self::$tileCacheFile);
+        @unlink(self::$spriteCacheFile);
     }
 
     protected function setUp(): void
@@ -44,7 +48,8 @@ class DofusMapParserTest extends TestCase
             dofusPath: __DIR__ . '/_files',
             mapsPath: __DIR__ . '/_files',
             mapByCoordinates: fn (MapCoordinates $coords): ?int => self::MAPS[$coords->x . ',' . $coords->y] ?? null,
-            tileCache: new SqliteCache(self::$cacheFile),
+            tileCache: new SqliteCache(self::$tileCacheFile),
+            spriteCache: new SqliteSpriteCache(self::$spriteCacheFile),
             attachmentsProviders: [
                 function (MapStructure $map) {
                     $attachments = [];

@@ -5,6 +5,7 @@ namespace Sprite;
 use Arakne\MapParser\Sprite\Sprite;
 use Arakne\MapParser\Sprite\SpriteState;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
+use Arakne\MapParser\Sprite\Cache\InMemorySpriteCache;
 use Arakne\MapParser\Test\AssertImageTrait;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +22,11 @@ class SwfSpriteRepositoryTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->repository = new SwfSpriteRepository(glob(__DIR__ . '/../_files/clips/gfx/o*.swf'));
+        $cache = new InMemorySpriteCache(3);
+        $this->repository = new SwfSpriteRepository(
+            glob(__DIR__ . '/../_files/clips/gfx/o*.swf'),
+            $cache
+        );
     }
 
     #[Test]
@@ -73,5 +78,13 @@ class SwfSpriteRepositoryTest extends TestCase
         $this->assertSame(0.0, $sprite->width);
         $this->assertSame(0.0, $sprite->height);
         $this->assertSame(Sprite::EMPTY_PNG, $sprite->pngData);
+    }
+
+    #[Test]
+    public function get_cache_identity()
+    {
+        $sprite1 = $this->repository->get(7019);
+        $sprite2 = $this->repository->get(7019);
+        $this->assertSame($sprite1, $sprite2, 'Le cache doit retourner la même instance Sprite pour le même id');
     }
 }

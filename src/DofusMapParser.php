@@ -8,6 +8,8 @@ use Arakne\MapParser\Loader\MapLoader;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Renderer\MapRendererInterface;
+use Arakne\MapParser\Sprite\Cache\InMemorySpriteCache;
+use Arakne\MapParser\Sprite\Cache\SpriteCacheInterface;
 use Arakne\MapParser\Sprite\SpriteRepositoryInterface;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Tile\Cache\NullTileCache;
@@ -37,14 +39,20 @@ final class DofusMapParser
      * Get ground sprites repository.
      */
     public private(set) SpriteRepositoryInterface $grounds {
-        get => $this->grounds ??= new SwfSpriteRepository(glob($this->dofusPath . '/clips/gfx/g*.swf') ?: []);
+        get => $this->grounds ??= new SwfSpriteRepository(
+            glob($this->dofusPath . '/clips/gfx/g*.swf') ?: [],
+            cache: $this->spriteCache->withNamespace('grounds'),
+        );
     }
 
     /**
      * Get object sprites repository.
      */
     public private(set) SpriteRepositoryInterface $objects {
-        get => $this->objects ??= new SwfSpriteRepository(glob($this->dofusPath . '/clips/gfx/o*.swf') ?: []);
+        get => $this->objects ??= new SwfSpriteRepository(
+            glob($this->dofusPath . '/clips/gfx/o*.swf') ?: [],
+            cache: $this->spriteCache->withNamespace('objects'),
+        );
     }
 
     public private(set) MapRendererInterface $renderer {
@@ -87,6 +95,11 @@ final class DofusMapParser
          * Only used when rendering world maps.
          */
         private readonly TileCacheInterface $tileCache = new NullTileCache(),
+
+        /**
+         * Cache implementation to use for sprites.
+         */
+        private readonly SpriteCacheInterface $spriteCache = new InMemorySpriteCache(100),
 
         /**
          * List of attachments providers to add to the map.

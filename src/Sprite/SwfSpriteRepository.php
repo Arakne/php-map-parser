@@ -2,13 +2,14 @@
 
 namespace Arakne\MapParser\Sprite;
 
+use Arakne\MapParser\Sprite\Cache\InMemorySpriteCache;
+use Arakne\MapParser\Sprite\Cache\SpriteCacheInterface;
 use Arakne\Swf\Extractor\Drawer\Converter\Converter;
 use Arakne\Swf\Extractor\Sprite\SpriteDefinition;
 use Arakne\Swf\Extractor\SwfExtractor;
 use Arakne\Swf\SwfFile;
 use Override;
 
-use function floor;
 use function is_numeric;
 
 /**
@@ -32,12 +33,6 @@ final class SwfSpriteRepository implements SpriteRepositoryInterface
      */
     private array $extractors = [];
 
-    /**
-     * @todo to remove when cache implementation is added
-     * @var array<int, Sprite>
-     */
-    private array $spriteCache = [];
-
     public function __construct(
         /**
          * Path of swf files
@@ -45,27 +40,26 @@ final class SwfSpriteRepository implements SpriteRepositoryInterface
          * @var list<string>
          */
         private readonly array $files,
-
-        // @todo inject cache implementation (custom interface, not PSR-6/16)
+        private readonly SpriteCacheInterface $cache = new InMemorySpriteCache(10),
     ) {}
 
     #[Override]
     public function get(int $id): Sprite
     {
-        // @todo external cache implementation
-        if ($cached = $this->spriteCache[$id] ?? null) {
-            return $cached;
-        }
+        return $this->cache->sprite($id, $this->doLoadSprite(...));
+    }
 
+    private function doLoadSprite(int $id): Sprite
+    {
         if (($swf = $this->getExtractorForId($id)) === null) {
-            return $this->spriteCache[$id] = Sprite::invalid($id, SpriteState::Missing);
+            return Sprite::invalid($id, SpriteState::Missing);
         }
 
         try {
             $sprite = $swf->byName((string) $id);
 
             if (!$sprite instanceof SpriteDefinition) {
-                return $this->spriteCache[$id] = Sprite::invalid($id, SpriteState::Invalid);
+                return Sprite::invalid($id, SpriteState::Invalid);
             }
 
             $bounds = $sprite->bounds();
@@ -76,10 +70,10 @@ final class SwfSpriteRepository implements SpriteRepositoryInterface
 
             if ($width < 1 || $height < 1) {
                 // Less than 1px
-                return $this->spriteCache[$id] = Sprite::invalid($id, SpriteState::Empty);
+                return Sprite::invalid($id, SpriteState::Empty);
             }
 
-            return $this->spriteCache[$id] = new Sprite(
+            return new Sprite(
                 id: $id,
                 pngData: $converter->toPng($sprite),
                 width: $width,
@@ -95,19 +89,23 @@ final class SwfSpriteRepository implements SpriteRepositoryInterface
 
     private function getExtractorForId(int $id): ?SwfExtractor
     {
-        if ($this->exportMap === null) {
-            $this->exportMap = [];
+        $this->exportMap ??= $this->cache->exports(
+            function () {
+                $exports = [];
 
-            foreach ($this->files as $file) {
-                $extractor = $this->getExtractor($file);
+                foreach ($this->files as $file) {
+                    $extractor = $this->getExtractor($file);
 
-                foreach ($extractor->exported() as $exportId => $_) {
-                    if (is_numeric($exportId)) {
-                        $this->exportMap[(int) $exportId] = $file;
+                    foreach ($extractor->exported() as $exportId => $_) {
+                        if (is_numeric($exportId)) {
+                            $exports[(int) $exportId] = $file;
+                        }
                     }
                 }
-            }
-        }
+
+                return $exports;
+            },
+        );
 
         return isset($this->exportMap[$id]) ? $this->getExtractor($this->exportMap[$id]) : null;
     }
