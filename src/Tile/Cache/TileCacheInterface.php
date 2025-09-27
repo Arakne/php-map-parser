@@ -2,6 +2,7 @@
 
 namespace Arakne\MapParser\Tile\Cache;
 
+use Arakne\MapParser\Tile\Coordinate\Bounds;
 use Arakne\MapParser\Tile\TileMapCoordinates;
 use Closure;
 use GdImage;
@@ -11,6 +12,15 @@ use GdImage;
  */
 interface TileCacheInterface
 {
+    /**
+     * Get (or compute and store) the map bounds
+     * If the bounds are passed as parameter on the tile renderer, this method will not be called.
+     *
+     * @param Closure():Bounds $compute The function to compute the bounds if not cached
+     * @return Bounds
+     */
+    public function bounds(Closure $compute): Bounds;
+
     /**
      * Get (or compute and store) the rendered map image
      *

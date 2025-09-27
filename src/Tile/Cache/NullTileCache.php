@@ -2,6 +2,7 @@
 
 namespace Arakne\MapParser\Tile\Cache;
 
+use Arakne\MapParser\Tile\Coordinate\Bounds;
 use Arakne\MapParser\Tile\TileMapCoordinates;
 use Closure;
 use GdImage;
@@ -13,6 +14,12 @@ use Override;
  */
 final readonly class NullTileCache implements TileCacheInterface
 {
+    #[Override]
+    public function bounds(Closure $compute): Bounds
+    {
+        return $compute();
+    }
+
     #[Override]
     public function map(TileMapCoordinates $coordinates, Closure $compute): ?GdImage
     {

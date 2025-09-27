@@ -33,7 +33,7 @@ final class WorldMapTileRenderer extends BaseTileRenderer
     ) {
         parent::__construct(
             $this->renderChunk(...),
-            $worldMap->bounds(),
+            $cache->bounds($worldMap->bounds(...)),
             mapWidth: MapRenderer::DISPLAY_WIDTH,
             mapHeight: MapRenderer::DISPLAY_HEIGHT,
             tileSize: $tileSize,

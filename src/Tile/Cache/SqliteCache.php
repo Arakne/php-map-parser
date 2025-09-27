@@ -2,6 +2,7 @@
 
 namespace Arakne\MapParser\Tile\Cache;
 
+use Arakne\MapParser\Tile\Coordinate\Bounds;
 use Arakne\MapParser\Tile\TileMapCoordinates;
 use Closure;
 use GdImage;
@@ -39,6 +40,30 @@ final readonly class SqliteCache implements TileCacheInterface
         $this->pdo->exec('PRAGMA journal_mode = WAL;');
 
         $this->initSchema();
+    }
+
+    #[Override]
+    public function bounds(Closure $compute): Bounds
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM bounds WHERE namespace = ?');
+        $stmt->execute([$this->namespace]);
+
+        if (($row = $stmt->fetch(PDO::FETCH_ASSOC)) !== false) {
+            return new Bounds((int) $row['xMin'], (int) $row['xMax'], (int) $row['yMin'], (int) $row['yMax']);
+        }
+
+        $bounds = $compute();
+
+        $stmt = $this->pdo->prepare('INSERT INTO bounds (namespace, xMin, xMax, yMin, yMax) VALUES (?, ?, ?, ?, ?)');
+        $stmt->execute([
+            $this->namespace,
+            $bounds->xMin,
+            $bounds->xMax,
+            $bounds->yMin,
+            $bounds->yMax,
+        ]);
+
+        return $bounds;
     }
 
     #[Override]
@@ -184,6 +209,18 @@ final readonly class SqliteCache implements TileCacheInterface
                 y INTEGER NOT NULL,
                 data BLOB,
                 PRIMARY KEY (namespace, x, y)
+            );
+            SQL,
+        );
+
+        $this->pdo->exec(
+            <<<'SQL'
+            CREATE TABLE IF NOT EXISTS bounds (
+                namespace TEXT NOT NULL,
+                xMin INTEGER NOT NULL,
+                xMax INTEGER NOT NULL,
+                yMin INTEGER NOT NULL,
+                yMax INTEGER NOT NULL
             );
             SQL,
         );

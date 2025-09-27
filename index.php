@@ -8,6 +8,7 @@ use Arakne\MapParser\Loader\MapLoader;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\CellShape;
 use Arakne\MapParser\Renderer\MapRenderer;
+use Arakne\MapParser\Sprite\Cache\SqliteSpriteCache;
 use Arakne\MapParser\Tile\Cache\SqliteCache;
 use Arakne\MapParser\Tile\Coordinate\Bounds;
 use Arakne\MapParser\Tile\Coordinate\LatLongBounds;
@@ -63,7 +64,7 @@ $dmp = new DofusMapParser(
         return MapStructure::fromSwfFile(new SwfFile($mapFile), new MapKey($map['key']), new MapCoordinates($map['MAP_X'], $map['MAP_Y'], $map['SUBAREA_ID']));
     },
     tileCache: new SqliteCache($cacheDir . '/tiles.db'),
-    spriteCache: new \Arakne\MapParser\Sprite\Cache\SqliteSpriteCache($cacheDir . '/sprites.db'),
+    spriteCache: new SqliteSpriteCache($cacheDir . '/sprites.db'),
     attachmentsProviders: [
         function (MapStructure $map) {
             if ($map->attachments) {
@@ -212,26 +213,24 @@ if (($argv[1] ?? null) === 'warmup') {
     exit(0);
 }
 
-$worker = new \Workerman\Worker('http://0.0.0.0:5000');
-$worker->count = 16;
+function run(string $path, array $get, Closure $sender): void {
+    global $dmp, $dofusMapsDir, $amaknaRenderer, $incarnamRenderer;
 
-$worker->onMessage = function (TcpConnection $connection, Request $request) use ($dofusMapsDir, $amaknaRenderer, $incarnamRenderer): void {
-    global $dmp;
-    switch ($request->path()) {
+    switch ($path) {
         case '/':
         case '/amakna':
             ob_start();
             $maxZoom = $amaknaRenderer->maxZoom + 1;
             $map = 'amakna';
             include __DIR__.'/worldmap.html.php';
-            $connection->send(new Response(body: ob_get_clean(), headers: ['Content-Type' => 'text/html']));
+            $sender(ob_get_clean(), ['Content-Type' => 'text/html']);
             return;
         case '/incarnam':
             ob_start();
             $maxZoom = $incarnamRenderer->maxZoom + 1;
             $map = 'incarnam';
             include __DIR__.'/worldmap.html.php';
-            $connection->send(new Response(body: ob_get_clean(), headers: ['Content-Type' => 'text/html']));
+            $sender(ob_get_clean(), ['Content-Type' => 'text/html']);
             return;
         case '/tiles/amakna':
             $tileRenderer = $amaknaRenderer;
@@ -241,7 +240,7 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
             break;
 
         case '/markers/incarnam':
-            $bbox = LatLongBounds::fromString($request->get('bbox'));
+            $bbox = LatLongBounds::fromString($get['bbox']);
             $bounds = $incarnamRenderer->coordinate->toMapBounds($bbox);
             $maps = incarnamMapsInBounds($bounds);
             $triggers = loadTriggers(array_map(fn (Map $m) => $m->id, $maps));
@@ -269,19 +268,19 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
                 }
             }
 
-            $connection->send(new Response(
-                headers: ['Content-Type' => 'application/json'],
-                body: json_encode([
+            $sender(
+                json_encode([
                     'type' => 'FeatureCollection',
                     'features' => [
                         ...$points,
                     ],
                 ]),
-            ));
+                ['Content-Type' => 'application/json'],
+            );
             return;
 
         case '/markers/amakna':
-            $bbox = LatLongBounds::fromString($request->get('bbox'));
+            $bbox = LatLongBounds::fromString($get['bbox']);
             $bounds = $amaknaRenderer->coordinate->toMapBounds($bbox);
             $maps = amaknaMapsInBounds($bounds);
             $triggers = loadTriggers(array_map(fn (Map $m) => $m->id, $maps));
@@ -312,19 +311,19 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
                 }
             }
 
-            $connection->send(new Response(
-                headers: ['Content-Type' => 'application/json'],
-                body: json_encode([
+            $sender(
+                json_encode([
                     'type' => 'FeatureCollection',
                     'features' => [
                         ...$points,
                     ],
                 ]),
-            ));
+                ['Content-Type' => 'application/json'],
+            );
             return;
 
         case '/showmap':
-            $mapId = (int) $request->get('id', 0);
+            $mapId = (int) $get['id'] ?? 0;
             $map = $dmp->load($mapId);
 
             $triggers = array_map(function ($trigger) use ($map) {
@@ -344,11 +343,11 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
             require __DIR__ . '/map.html.php';
             $content = ob_get_clean();
 
-            $connection->send(new Response(body: $content));
+            $sender($content);
             return;
 
         case '/render':
-            $mapId = (int) $request->get('id', 0);
+            $mapId = (int) $get['id'] ?? 0;
 
             $rendered = $dmp->render($mapId);
 
@@ -356,20 +355,20 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
             imagepng($rendered);
             $imageData = ob_get_clean();
 
-            $connection->send(new Response(
-                headers: ['Content-Type' => 'image/png'],
-                body: $imageData,
-            ));
+            $sender(
+                $imageData,
+                ['Content-Type' => 'image/png'],
+            );
             return;
 
         default:
-            $connection->send(new Response(404, body: 'Not found'));
+            $sender('Not found');
             return;
     }
 
-    $x = (int) $request->get('x', 0);
-    $y = (int) $request->get('y', 0);
-    $zoom = (int) $request->get('z', 0);
+    $x = (int) $get['x'] ?? 0;
+    $y = (int) $get['y'] ?? 0;
+    $zoom = (int) $get['z'] ?? 0;
 
     $img = $tileRenderer->render($x, $y, $zoom);
 
@@ -377,12 +376,27 @@ $worker->onMessage = function (TcpConnection $connection, Request $request) use 
     imagepng($img);
     $imageData = ob_get_clean();
 
-    $connection->send(
-        new Response(
-            headers: ['Content-Type' => 'image/png'],
-            body: $imageData,
-        )
-    );
+    $sender($imageData, ['Content-Type' => 'image/png']);
+}
+
+if (php_sapi_name() === 'cli-server') {
+    run($_SERVER['PATH_INFO'], $_GET, function (string $data, array $headers = []) {
+        foreach ($headers as $name => $value) {
+            header($name . ': ' . $value);
+        }
+        echo $data;
+    });
+    return;
+}
+
+$worker = new \Workerman\Worker('http://0.0.0.0:5000');
+$worker->count = 16;
+
+$worker->onMessage = function (TcpConnection $connection, Request $request) {;
+    run($request->path(), $request->get(), function (string $data, array $headers = []) use ($connection) {
+        $response = new Response(200, $headers, $data);
+        $connection->send($response);
+    });
 };
 
 \Workerman\Worker::runAll();

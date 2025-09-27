@@ -2,12 +2,15 @@
 
 namespace Arakne\MapParser\Tile\Cache;
 
+use Arakne\MapParser\Tile\Coordinate\Bounds;
 use Arakne\MapParser\Tile\TileMapCoordinates;
 use Closure;
 use GdImage;
 use Override;
 
 use function dirname;
+use function file_get_contents;
+use function file_put_contents;
 use function imagecreatefrompng;
 use function imagepng;
 use function is_dir;
@@ -26,6 +29,32 @@ final readonly class FilesystemTileCache implements TileCacheInterface
          */
         private string $path,
     ) {}
+
+    #[Override]
+    public function bounds(Closure $compute): Bounds
+    {
+        $path = $this->path . '/bounds';
+
+        if (is_file($path)) {
+            $content = file_get_contents($path);
+
+            if ($content !== false) {
+                [$xMin, $xMax, $yMin, $yMax] = explode(',', $content, 4);
+                return new Bounds((int) $xMin, (int) $xMax, (int) $yMin, (int) $yMax);
+            }
+        }
+
+        $bounds = $compute();
+        $dir = dirname($path);
+
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+
+        file_put_contents($path, $bounds->xMin . ',' . $bounds->xMax . ',' . $bounds->yMin . ',' . $bounds->yMax);
+
+        return $bounds;
+    }
 
     #[Override]
     public function map(TileMapCoordinates $coordinates, Closure $compute): ?GdImage
