@@ -46,6 +46,107 @@ use function is_int;
 
 /**
  * Facade for parsing and rendering Dofus maps.
+ *
+ * Usage:
+ * ```php
+ * // Configure the parser
+ * $mapParser = new DofusMapParser(
+ *     dofusPath: '/path/to/dofus',
+ *     mapsPath: '/srv/www/dofus/maps', // Optional, by default will use maps from the client
+ *     mapByCoordinates: function (MapCoordinates $coordinates, int $superAreaId) use ($pdo) {
+ *         // Get the map ID from the database using coordinates
+ *         $stmt = $pdo->prepare('SELECT id FROM maps WHERE x = ? AND y = ? AND super_area_id = ?');
+ *         $stmt->execute([$coordinates->x, $coordinates->y, $superAreaId]);
+ *
+ *         $id = $stmt->fetchColumn();
+ *
+ *         return $id !== false ? (int) $id : null;
+ *     },
+ *     // Configure caches
+ *     tileCache: new SqliteTileCache(__DIR__ . '/var/cache/tiles.db'),
+ *     spriteCache: new SqliteSpriteCache(__DIR__ . '/var/cache/sprites.db'),
+ *     layersConfigurator: function (LayerRendersBuilder $layers) {
+ *         // Configure here the layers to render (for example, enable grid)
+ *         $layers->enableGrid();
+ *     },
+ *     attachmentsProviders: [
+ *         function (MapStructure $structure) {
+ *             // Get map data from the database using map ID
+ *             $stmt = $pdo->prepare('SELECT * FROM maps WHERE id = ?');
+ *             $stmt->execute([$structure->id]);
+ *             $row = $stmt->fetch();
+ *
+ *             // Map is not found
+ *             if ($row === false) {
+ *                 return [];
+ *             }
+ *
+ *             return [
+ *                 new MapKey($row['key']),
+ *                 new MapCoordinates($row['x'], $row['y']),
+ *                 // Other attachments like map name, super area, etc.
+ *             ];
+ *         },
+ *     ],
+ * );
+ *
+ * // Parse map data
+ * $map = $mapParser->load(1302);
+ *
+ * foreach ($map->cells as $cell) {
+ *     // You can now access cell properties
+ *     if ($cell->isTeleport) {
+ *         // ...
+ *     }
+ * }
+ *
+ * // Render a map as PNG
+ * $img = $mapParser->render(1302);
+ * header('Content-Type: image/png');
+ * imagepng($img);
+ *
+ * // Render world map tile (using leaflet for example)
+ * $tileRenderer = $mapParser->incarnamWorldMap();
+ * $img = $tileRenderer->render((int) $_GET['x'], (int) $_GET['y'], (int) $_GET['z']);
+ * header('Content-Type: image/png');
+ * imagepng($img);
+ *
+ * // Find POIs on the world map using bounding box
+ * $tileRenderer = $mapParser->incarnamWorldMap();
+ * $bbox = LatLongBounds::fromString($_GET['bbox']); // bbox=west,south,east,north
+ *
+ * // Get map coordinates to load
+ * $bounds = $tileRenderer->coordinate->toMapBounds($bbox);
+ * $points = [];
+ *
+ * // Load POIs for each map in the bounding box
+ * for ($x = $bounds->xMin; $x <= $bounds->xMax; $x++) {
+ *     for ($y = $bounds->yMin; $y <= $bounds->yMax; $y++) {
+ *         $map = $mapRepository->findMapByCoords($x, $y);
+ *
+ *         if ($map) {
+ *             $loadedMap = $mapParser->load($map->id);
+ *             foreach ($mapRepository->findMapPois($map) as $poi) {
+ *                 // Get the POI position in latitude/longitude, so it can be displayed by leaflet
+ *                 $pos = $tileRenderer->coordinate->cellToLatLong($map, $poi->cellId);
+ *
+ *                 if ($pos) {
+ *                     $points[] = [
+ *                         'name' => $poi->name,
+ *                         'type' => $poi->type,
+ *                         'lat' => $pos->latitude,
+ *                         'long' => $pos->longitude,
+ *                     ];
+ *                 }
+ *             }
+ *         }
+ *     }
+ * }
+ *
+ * // Display POIs as JSON
+ * header('Content-Type: application/json');
+ * echo json_encode($points);
+ * ```
  */
 final class DofusMapParser
 {
@@ -132,6 +233,20 @@ final class DofusMapParser
 
         /**
          * Custom configuration for renderer layers.
+         *
+         * Example:
+         * ```php
+         * $parser = new DofusMapParser(
+         *     // ...
+         *     layersConfigurator: function (LayerRendersBuilder $layers) use ($pnjRenderer) {
+         *         $layers
+         *             ->enableGrid()
+         *             ->set(LayerRendersBuilder::GRID_LAYER + 10, $pnjRenderer) // Render PNJ above grid
+         *         ;
+         *     },
+         *     // ...
+         * );
+         * ```
          *
          * @var Closure(LayerRendersBuilder):void|null
          */
