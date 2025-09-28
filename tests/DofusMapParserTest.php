@@ -7,7 +7,7 @@ use Arakne\MapParser\Loader\MapKey;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Sprite\Cache\SqliteSpriteCache;
 use Arakne\MapParser\Test\AssertImageTrait;
-use Arakne\MapParser\Tile\Cache\SqliteCache;
+use Arakne\MapParser\Tile\Cache\SqliteTileCache;
 use Arakne\MapParser\Tile\Coordinate\Bounds;
 use Arakne\Swf\SwfFile;
 use PHPUnit\Framework\Attributes\Test;
@@ -48,7 +48,7 @@ class DofusMapParserTest extends TestCase
             dofusPath: __DIR__ . '/_files',
             mapsPath: __DIR__ . '/_files',
             mapByCoordinates: fn (MapCoordinates $coords): ?int => self::MAPS[$coords->x . ',' . $coords->y] ?? null,
-            tileCache: new SqliteCache(self::$tileCacheFile),
+            tileCache: new SqliteTileCache(self::$tileCacheFile),
             spriteCache: new SqliteSpriteCache(self::$spriteCacheFile),
             attachmentsProviders: [
                 function (MapStructure $map) {

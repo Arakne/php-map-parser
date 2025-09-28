@@ -11,7 +11,7 @@ use Arakne\MapParser\Renderer\TileRenderer;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
 use Arakne\MapParser\Tile\Cache\FilesystemTileCache;
-use Arakne\MapParser\Tile\Cache\SqliteCache;
+use Arakne\MapParser\Tile\Cache\SqliteTileCache;
 use Arakne\MapParser\Tile\Coordinate\Bounds;
 use Arakne\MapParser\Tile\TileMapCoordinates;
 use Arakne\Swf\SwfFile;
@@ -426,7 +426,7 @@ class TileRendererTest extends TestCase
                 min(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
                 max(array_map(fn ($value) => (int) explode(',', $value)[1], array_keys(self::MAPS))),
             ),
-            cache: new SqliteCache('/tmp/' . bin2hex(random_bytes(5))),
+            cache: new SqliteTileCache('/tmp/' . bin2hex(random_bytes(5))),
         );
 
         $img = $renderer->render(1, 1, 2);

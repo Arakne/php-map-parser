@@ -10,7 +10,7 @@ use Arakne\MapParser\Renderer\CellShape;
 use Arakne\MapParser\Renderer\Layer\LayerRendersBuilder;
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Sprite\Cache\SqliteSpriteCache;
-use Arakne\MapParser\Tile\Cache\SqliteCache;
+use Arakne\MapParser\Tile\Cache\SqliteTileCache;
 use Arakne\MapParser\Tile\Coordinate\Bounds;
 use Arakne\MapParser\Tile\Coordinate\LatLongBounds;
 use Arakne\Swf\SwfFile;
@@ -64,7 +64,7 @@ $dmp = new DofusMapParser(
 
         return MapStructure::fromSwfFile(new SwfFile($mapFile), new MapKey($map['key']), new MapCoordinates($map['MAP_X'], $map['MAP_Y'], $map['SUBAREA_ID']));
     },
-    tileCache: new SqliteCache($cacheDir . '/tiles.db'),
+    tileCache: new SqliteTileCache($cacheDir . '/tiles.db'),
     spriteCache: new SqliteSpriteCache($cacheDir . '/sprites.db'),
     layersConfigurator: function (LayerRendersBuilder $builder) {
         $builder->enableGrid();
