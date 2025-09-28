@@ -327,7 +327,7 @@ function run(string $path, array $get, Closure $sender): void {
             $map = $dmp->load($mapId);
 
             $triggers = array_map(function ($trigger) use ($map) {
-                $cell = CellShape::fromCellId($map, (int)$trigger['CELL_ID']);
+                $cell = CellShape::fromCellId($map, (int)$trigger['CELL_ID'])->toDisplayPosition($map);
 
                 return [
                     'x' => $cell->x,

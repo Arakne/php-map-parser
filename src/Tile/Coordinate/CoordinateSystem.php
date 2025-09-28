@@ -134,7 +134,7 @@ final readonly class CoordinateSystem
      */
     public function cellToPoint(Map $map, int $cellId): ?Point
     {
-        $cell = CellShape::fromCellId($map, $cellId);
+        $cell = CellShape::fromCellId($map, $cellId)?->toDisplayPosition();
 
         if (!$cell) {
             return null;

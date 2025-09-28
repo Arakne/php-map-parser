@@ -83,13 +83,13 @@ class MapRenderTest extends TestCase
 
         $img = $this->renderer->render($map);
 
-        imagepng($img, __DIR__ . '/_files/37.png');
+        imagepng($img, __DIR__ . '/_files/render.png');
 
         $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
         $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
 
-        $this->assertImages(__DIR__.'/_files/4208.png', __DIR__ . '/_files/37.png');
-        unlink(__DIR__ . '/_files/37.png');
+        $this->assertImages(__DIR__.'/_files/4208.png', __DIR__ . '/_files/render.png');
+        unlink(__DIR__ . '/_files/render.png');
     }
 
     #[Test]

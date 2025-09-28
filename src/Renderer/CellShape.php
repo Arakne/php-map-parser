@@ -4,6 +4,7 @@ namespace Arakne\MapParser\Renderer;
 
 use Arakne\MapParser\Loader\Map;
 use Arakne\MapParser\Parser\Cell;
+use Arakne\MapParser\Tile\Coordinate\Point;
 
 /**
  * A cell with position in pixel
@@ -25,7 +26,37 @@ final readonly class CellShape
          * Base cell object
          */
         public Cell $data,
+
+        /**
+         * The map this cell belongs to
+         */
+        private Map $map,
     ) {}
+
+    /**
+     * Get the pixel coordinates of the cell on the display image
+     *
+     * This method takes in account the scaling + cropping of the final image
+     * if its dimensions are different from the default ones.
+     *
+     * Null will be returned if the cell is outside the display area.
+     *
+     * @return Point|null The pixel coordinates on the display image, or null if outside
+     */
+    public function toDisplayPosition(): ?Point
+    {
+        $point = MapScale::for($this->map)->applyToCoordinates($this->x, $this->y);
+
+        if ($point->x < 0
+            || $point->x > MapRenderer::DISPLAY_WIDTH
+            || $point->y < 0
+            || $point->y > MapRenderer::DISPLAY_HEIGHT
+        ) {
+            return null;
+        }
+
+        return $point;
+    }
 
     /**
      * Parse a single cell data to cell shape from its cell id
@@ -54,7 +85,7 @@ final readonly class CellShape
         $x = (int) ($column * MapRenderer::CELL_WIDTH + $subLine * MapRenderer::CELL_HALF_WIDTH);
         $y = (int) ($line * MapRenderer::CELL_HEIGHT + $subLine * MapRenderer::CELL_HALF_HEIGHT - MapRenderer::LEVEL_HEIGHT * ($cell->ground->level - 7));
 
-        return new self($x, $y, $cell);
+        return new self($x, $y, $cell, $map);
     }
 
     /**
@@ -94,7 +125,7 @@ final readonly class CellShape
             $y = (int) ($_loc10 * MapRenderer::CELL_HALF_HEIGHT - MapRenderer::LEVEL_HEIGHT * ($cell->ground->level - 7));
 
             if (!$ignoreInactive || $cell->active) {
-                $shapes[] = new CellShape($x, $y, $cell);
+                $shapes[] = new CellShape($x, $y, $cell, $map);
             }
         }
 

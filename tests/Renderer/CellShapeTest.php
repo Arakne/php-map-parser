@@ -6,6 +6,7 @@ use Arakne\MapParser\Loader\MapKey;
 use Arakne\MapParser\Loader\MapLoader;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\CellShape;
+use Arakne\MapParser\Tile\Coordinate\Point;
 use Arakne\Swf\SwfFile;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -59,5 +60,49 @@ class CellShapeTest extends TestCase
 
         $this->assertSame(583, CellShape::fromCellId($map, 388)->x);
         $this->assertSame(351, CellShape::fromCellId($map, 388)->y);
+    }
+
+    #[Test]
+    public function toDisplayPositionOnMapWithDefaultSizeShouldBeIdenticalToXY()
+    {
+        $mapStructure = MapStructure::fromSwfFile(new SwfFile(__DIR__ . '/../_files/10302_0709271842X.swf'));
+        $map = new MapLoader()->load($mapStructure, MapKey::fromFile(__DIR__ . '/../_files/10302.key'));
+
+        $cells = CellShape::fromMap($map);
+
+        foreach ($cells as $cellId => $cell) {
+            $this->assertSame($cell->x, $cell->toDisplayPosition()->x, "Cell $cellId x");
+            $this->assertSame($cell->y, $cell->toDisplayPosition()->y, "Cell $cellId y");
+        }
+    }
+
+    #[Test]
+    public function toDisplayPositionOnBiggerMap()
+    {
+        $mapStructure = MapStructure::fromSwfFile(new SwfFile(__DIR__ . '/../_files/4208_0706131721X.swf'));
+        $map = new MapLoader()->load($mapStructure, MapKey::fromFile(__DIR__ . '/../_files/4208.key'));
+
+        $cells = CellShape::fromMap($map, false);
+
+        $this->assertNull($cells[0]->toDisplayPosition());
+        $this->assertNull($cells[777]->toDisplayPosition());
+        $this->assertNull($cells[780]->toDisplayPosition());
+
+        $this->assertNotEquals($cells[430]->x, $cells[430]->toDisplayPosition()->x);
+        $this->assertNotEquals($cells[430]->y, $cells[430]->toDisplayPosition()->y);
+        $this->assertEquals(new Point(185, 237), $cells[430]->toDisplayPosition());
+    }
+
+    #[Test]
+    public function toDisplayPositionOnSmallerMap()
+    {
+        $mapStructure = MapStructure::fromSwfFile(new SwfFile(__DIR__ . '/../_files/703_0706131721X.swf'));
+        $map = new MapLoader()->load($mapStructure, MapKey::fromFile(__DIR__ . '/../_files/703.key'));
+
+        $cells = CellShape::fromMap($map, false);
+
+        $this->assertNotEquals($cells[56]->x, $cells[56]->toDisplayPosition()->x);
+        $this->assertNotEquals($cells[56]->y, $cells[56]->toDisplayPosition()->y);
+        $this->assertEquals(new Point(370, 229), $cells[56]->toDisplayPosition());
     }
 }

@@ -10,10 +10,7 @@ use Arakne\MapParser\Sprite\SpriteRepositoryInterface;
 use GdImage;
 use Override;
 
-use function assert;
 use function imagecreatetruecolor;
-use function imagescale;
-use function imagesx;
 
 /**
  * Base dofus map renderer
@@ -84,55 +81,9 @@ final readonly class MapRenderer implements MapRendererInterface
         }
 
         if ($hasCustomSize) {
-            $img = $this->rescaleMap($map, $img);
+            $img = MapScale::for($map)->applyToImage($img);
         }
 
         return $img;
-    }
-
-    /**
-     * Resize the map to fit in the display area
-     *
-     * @param Map $map
-     * @param GdImage $img
-     *
-     * @return GdImage
-     *
-     * @see https://github.com/Emudofus/Dofus/blob/1.29/ank/battlefield/mc/Container.as#L154
-     */
-    private function rescaleMap(Map $map, GdImage $img): GdImage
-    {
-        $actualWidth = imagesx($img);
-        $actualHeight = imagesy($img);
-
-        // Scaling is only applied if both dimensions are greater than the default size
-        // Otherwise, the map is displayed at its original size and simply cropped/centered
-        if ($map->height > self::DEFAULT_HEIGHT && $map->width > self::DEFAULT_WIDTH) {
-            $scale = $map->height > $map->width
-                ? self::DISPLAY_WIDTH / (($map->width - 1) * self::CELL_WIDTH)
-                : self::DISPLAY_HEIGHT / (($map->height - 1) * self::CELL_HEIGHT)
-            ;
-
-            $actualWidth = (int) (($map->width - 1) * self::CELL_WIDTH * $scale);
-            $actualHeight = (int) (($map->height - 1) * self::CELL_HEIGHT * $scale);
-
-            $img = imagescale($img, $actualWidth, $actualHeight);
-            assert($img !== false);
-        }
-
-        // Map has the correct size, no need to crop
-        if ($actualWidth === self::DISPLAY_WIDTH && $actualHeight === self::DISPLAY_HEIGHT) {
-            return $img;
-        }
-
-        $result = imagecreatetruecolor(self::DISPLAY_WIDTH, self::DISPLAY_HEIGHT);
-        assert($result !== false);
-
-        $offsetX = (self::DISPLAY_WIDTH - $actualWidth) / 2;
-        $offsetY = (self::DISPLAY_HEIGHT - $actualHeight) / 2;
-
-        imagecopy($result, $img, (int) $offsetX, (int) $offsetY, 0, 0, $actualWidth, $actualHeight);
-
-        return $result;
     }
 }

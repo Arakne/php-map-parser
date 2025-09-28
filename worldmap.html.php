@@ -95,7 +95,7 @@
                         data-id="${p.id}"
                         data-target="${p.targetMapId}"></a>
                 </div>`;
-                return L.marker(latlng, { icon: L.divIcon({ html, className: '', iconSize: [20,20], iconAnchor:[10, 20] }) });
+                return L.marker(latlng, { icon: L.divIcon({ html, className: '', iconSize: [20,20], iconAnchor:[10, 10] }) });
             }
         }).addTo(tpLayer);
     }
