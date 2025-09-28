@@ -1,3 +1,8 @@
+<?php
+
+use Arakne\MapParser\WorldMap\WorldMapTileRenderer;
+
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -39,7 +44,7 @@
     }
 </style>
 
-<div id="mapid" style="height: calc(100vh - 30px); width: 100vw; background-color: #E5E5B9;"></div>
+<div id="mapid" style="height: calc(100vh - 30px); width: 100vw; background-color: <?= WorldMapTileRenderer::BACKGROUND_COLOR ?>;"></div>
 <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"
         integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og=="
         crossorigin=""></script>

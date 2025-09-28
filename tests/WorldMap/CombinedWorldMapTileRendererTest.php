@@ -22,7 +22,6 @@ use RecursiveIteratorIterator;
 use SplFileInfo;
 
 use function bin2hex;
-use function file_get_contents;
 use function glob;
 use function imagepng;
 use function mkdir;

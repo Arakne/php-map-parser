@@ -7,8 +7,6 @@ use LogicException;
 
 /**
  * Store the map data
- *
- * @todo add other fields
  */
 final class Map
 {

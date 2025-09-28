@@ -176,10 +176,11 @@ final class DofusMapParser
      * imagepng($tileRenderer->render(new TileMapCoordinates($_GET['x'], $_GET['y'], $_GET['z'])));
      * ```
      *
-     * @param non-negative-int $minZoomLevel Zoom level when the actual game maps starts to be renderer over world map @todo relative zoom level
+     * @param int $minZoomLevel Zoom level when the actual game maps starts to be renderer over world map.
+     *                          If negative or zero, it will be used as relative to maxZoom (so maxZoom + minZoomLevel)
      * @return TileRendererInterface
      */
-    public function incarnamWorldMap(int $minZoomLevel): TileRendererInterface
+    public function incarnamWorldMap(int $minZoomLevel = -2): TileRendererInterface
     {
         return $this->worldMap(self::INCARNAM_SUPERAREA_ID, $minZoomLevel);
     }
@@ -195,10 +196,12 @@ final class DofusMapParser
      *  header('Content-Type: image/png');
      *  imagepng($tileRenderer->render(new TileMapCoordinates($_GET['x'], $_GET['y'], $_GET['z'])));
      *  ```
-     * @param non-negative-int $minZoomLevel Zoom level when the actual game maps starts to be renderer over world map @todo relative zoom level
+     * @param int $minZoomLevel Zoom level when the actual game maps starts to be renderer over world map
+     *                          If negative or zero, it will be used as relative to maxZoom (so maxZoom + minZoomLevel)
+     *
      * @return TileRendererInterface
      */
-    public function amaknaWorldMap(int $minZoomLevel): TileRendererInterface
+    public function amaknaWorldMap(int $minZoomLevel = -2): TileRendererInterface
     {
         return $this->worldMap(self::AMAKNA_SUPERAREA_ID, $minZoomLevel);
     }
@@ -208,11 +211,12 @@ final class DofusMapParser
      * If {@see DofusMapParser::$mapByCoordinates} is set, both world map and game maps will be rendered.
      *
      * @param non-negative-int $superAreaId The super area ID to render (0 = Amakna, 3 = Incarnam, etc.)
-     * @param non-negative-int $minZoomLevel Zoom level when the actual game maps starts to be renderer over world map @todo relative zoom level
+     * @param int $minZoomLevel Zoom level when the actual game maps starts to be renderer over world map
+     *                          If negative or zero, it will be used as relative to maxZoom (so maxZoom + minZoomLevel)
      *
      * @return TileRendererInterface
      */
-    public function worldMap(int $superAreaId, int $minZoomLevel): TileRendererInterface
+    public function worldMap(int $superAreaId, int $minZoomLevel = -2): TileRendererInterface
     {
         $worldMap = new SwfWorldMap(new SwfFile($this->dofusPath . '/clips/maps/' . $superAreaId . '.swf'));
 

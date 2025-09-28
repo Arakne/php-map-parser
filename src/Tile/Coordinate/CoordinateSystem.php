@@ -152,7 +152,6 @@ final readonly class CoordinateSystem
         $mapX *= $this->chunkWidth;
         $mapY *= $this->chunkHeight;
 
-        // @todo handle map scale and cropping on bigger maps
         return new Point(
             (int) round(($mapX + $cell->x) * $this->scale),
             (int) round(($mapY + $cell->y) * $this->scale),

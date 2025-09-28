@@ -51,6 +51,11 @@ final readonly class CombinedWorldMapTileRenderer implements TileRendererInterfa
      */
     public CoordinateSystem $coordinate;
 
+    /**
+     * @var non-negative-int
+     */
+    private int $minZoomLevel;
+
     private TileRendererInterface $worldMapRenderer;
     private TileRendererInterface $gameMapRenderer;
 
@@ -74,11 +79,9 @@ final readonly class CombinedWorldMapTileRenderer implements TileRendererInterfa
 
         /**
          * The minimum zoom level to render game maps over the world map
-         *
-         * @var non-negative-int
-         * @todo relative zoom level (if <= 0 use maxZoom + minZoomLevel)
+         * If this value is negative or zero, it will be used as relative to maxZoom (so maxZoom + minZoomLevel)
          */
-        private int $minZoomLevel,
+        int $minZoomLevel,
 
         /**
          * Use to parse resolved maps
@@ -107,6 +110,7 @@ final readonly class CombinedWorldMapTileRenderer implements TileRendererInterfa
 
         $this->maxZoom = $this->gameMapRenderer->maxZoom;
         $this->coordinate = $this->gameMapRenderer->coordinate;
+        $this->minZoomLevel = $minZoomLevel > 0 ? $minZoomLevel : max(0, $this->maxZoom + $minZoomLevel);
     }
 
     #[Override]

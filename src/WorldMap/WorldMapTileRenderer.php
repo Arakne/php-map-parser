@@ -19,6 +19,11 @@ use function imagesavealpha;
 final class WorldMapTileRenderer extends BaseTileRenderer
 {
     /**
+     * The world map background color on the client, in hex format
+     */
+    public const string BACKGROUND_COLOR = '#E5E5B9';
+
+    /**
      * @param WorldMapInterface $worldMap
      * @param positive-int $tileSize {@see BaseTileRenderer::$tileSize}
      * @param TileCacheInterface $cache The cache to use for storing rendered chunks and tiles

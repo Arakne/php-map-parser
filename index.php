@@ -89,8 +89,8 @@ $dmp = new DofusMapParser(
     ]
 );
 
-$amaknaRenderer = $dmp->amaknaWorldMap(7);
-$incarnamRenderer = $dmp->incarnamWorldMap(6);
+$amaknaRenderer = $dmp->amaknaWorldMap();
+$incarnamRenderer = $dmp->incarnamWorldMap();
 
 /**
  * @param Bounds $bounds

@@ -174,7 +174,7 @@ class DofusMapParserTest extends TestCase
     #[Test]
     public function incarnamWorldMapFunctional()
     {
-        $worldMap = $this->parser->incarnamWorldMap(4);
+        $worldMap = $this->parser->incarnamWorldMap(-4);
 
         $img = $worldMap->render(0, 0, 0);
         imagesavealpha($img, true);
