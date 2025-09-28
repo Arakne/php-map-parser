@@ -67,3 +67,34 @@ jobs:
 
             - name: Run checkstyle
               run: vendor/bin/php-cs-fixer check --diff --verbose
+
+    coverage:
+        name: Test coverage
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Install PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: 8.4
+                  extensions: json, gd, imagick
+                  ini-values: date.timezone=Europe/Paris
+
+            - name: Install SVG renderer commands
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y librsvg2-bin
+
+            - name: Install dependencies
+              run: composer install --prefer-dist --no-progress
+
+            - name: Run test coverage
+              run: FIX_ROTATE_IMAGICK=1 ./vendor/bin/phpunit --coverage-clover=coverage.xml
+
+            - name: Upload coverage to Codecov
+              uses: codecov/codecov-action@v4
+              with:
+                  files: coverage.xml
+                  token: ${{ secrets.CODECOV_TOKEN }}

@@ -1,7 +1,7 @@
 # Dofus map parser in PHP
 
 [![Build](https://github.com/Arakne/php-map-parser/actions/workflows/build.yml/badge.svg)](https://github.com/Arakne/php-map-parser/actions/workflows/build.yml)
-[![Packagist](https://img.shields.io/packagist/v/arakne/swf)](https://packagist.org/packages/arakne/swf)
+[![Packagist](https://img.shields.io/packagist/v/arakne/php-map-parser)](https://packagist.org/packages/arakne/php-map-parser)
 [![codecov](https://codecov.io/github/Arakne/php-map-parser/graph/badge.svg?token=vrelSdfWkp)](https://codecov.io/github/Arakne/php-map-parser)
 [![License](https://img.shields.io/github/license/Arakne/php-map-parser)](./COPYING.LESSER)
 
