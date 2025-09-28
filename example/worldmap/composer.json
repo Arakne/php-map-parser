@@ -1,0 +1,27 @@
+{
+  "name": "arakne/worldmap-example",
+  "license": "LGPL-3.0-or-later",
+  "authors": [
+    {
+      "name": "Vincent Quatrevieux",
+      "email": "quatrevieux.vincent@gmail.com"
+    }
+  ],
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../../"
+    }
+  ],
+  "minimum-stability": "dev",
+  "require": {
+    "php": "~8.4",
+    "arakne/php-map-parser": "dev-master",
+    "workerman/workerman": "~5.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Example\\Worldmap\\": "src"
+    }
+  }
+}

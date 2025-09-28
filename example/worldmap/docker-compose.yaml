@@ -1,0 +1,11 @@
+services:
+    php:
+        restart: unless-stopped
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: worldmap_example_php
+        env_file:
+            - .env
+        ports:
+            - "5000:80"
