@@ -28,6 +28,11 @@ final readonly class CellShape
         public Cell $data,
 
         /**
+         * Get the cell id in the map
+         */
+        public int $id,
+
+        /**
          * The map this cell belongs to
          */
         private Map $map,
@@ -85,7 +90,7 @@ final readonly class CellShape
         $x = (int) ($column * MapRenderer::CELL_WIDTH + $subLine * MapRenderer::CELL_HALF_WIDTH);
         $y = (int) ($line * MapRenderer::CELL_HEIGHT + $subLine * MapRenderer::CELL_HALF_HEIGHT - MapRenderer::LEVEL_HEIGHT * ($cell->ground->level - 7));
 
-        return new self($x, $y, $cell, $map);
+        return new self($x, $y, $cell, $cellId, $map);
     }
 
     /**
@@ -94,7 +99,7 @@ final readonly class CellShape
      * @param Map $map Map to load
      * @param bool $ignoreInactive Ignore the inactive cells ?
      *
-     * @return CellShape[]
+     * @return array<int, CellShape> The cell shapes, indexed by cell id
      */
     public static function fromMap(Map $map, bool $ignoreInactive = true): array
     {
@@ -105,7 +110,7 @@ final readonly class CellShape
         $_loc10 = 0;
         $_loc11 = 0;
 
-        foreach ($map->cells as $cell) {
+        foreach ($map->cells as $id => $cell) {
             if ($_loc9 === $_loc14) {
                 $_loc9 = 0;
                 ++$_loc10;
@@ -125,7 +130,7 @@ final readonly class CellShape
             $y = (int) ($_loc10 * MapRenderer::CELL_HALF_HEIGHT - MapRenderer::LEVEL_HEIGHT * ($cell->ground->level - 7));
 
             if (!$ignoreInactive || $cell->active) {
-                $shapes[] = new CellShape($x, $y, $cell, $map);
+                $shapes[$id] = new CellShape($x, $y, $cell, $id, $map);
             }
         }
 

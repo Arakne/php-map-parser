@@ -32,6 +32,10 @@ final class GroundObject implements LayerObjectInterface
 
     /**
      * Get the ground slope
+     *
+     * Note: The slope 0 is not valid, flat ground is represented by slope 1
+     *
+     * @var int<0, 15>
      */
     public int $slope {
         get => ($this->data[4] & 60) >> 2;
