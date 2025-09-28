@@ -8,6 +8,7 @@ use Arakne\MapParser\Loader\MapKey;
 use Arakne\MapParser\Loader\MapLoader;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Parser\CellDataParser;
+use Arakne\MapParser\Renderer\Layer\LayerRendersBuilder;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
 use Arakne\MapParser\Util\XorCipher;
@@ -36,8 +37,10 @@ class MapRenderTest extends TestCase
     protected function setUp(): void
     {
         $this->renderer = new MapRenderer(
-            new SwfSpriteRepository(glob(__DIR__.'/../_files/clips/gfx/g*.swf')),
-            new SwfSpriteRepository(glob(__DIR__.'/../_files/clips/gfx/o*.swf')),
+            new LayerRendersBuilder(
+                new SwfSpriteRepository(glob(__DIR__.'/../_files/clips/gfx/g*.swf')),
+                new SwfSpriteRepository(glob(__DIR__.'/../_files/clips/gfx/o*.swf')),
+            )->build()
         );
     }
 

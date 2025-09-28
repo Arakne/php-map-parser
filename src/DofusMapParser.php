@@ -6,6 +6,7 @@ use Arakne\MapParser\Loader\Map;
 use Arakne\MapParser\Loader\MapCoordinates;
 use Arakne\MapParser\Loader\MapLoader;
 use Arakne\MapParser\Loader\MapStructure;
+use Arakne\MapParser\Renderer\Layer\LayerRendersBuilder;
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Renderer\MapRendererInterface;
 use Arakne\MapParser\Sprite\Cache\InMemorySpriteCache;
@@ -56,7 +57,19 @@ final class DofusMapParser
     }
 
     public private(set) MapRendererInterface $renderer {
-        get => $this->renderer ??= new MapRenderer($this->grounds, $this->objects);
+        get {
+            if (isset($this->renderer)) {
+                return $this->renderer;
+            }
+
+            $layers = new LayerRendersBuilder($this->grounds, $this->objects);
+
+            if ($this->layersConfigurator !== null) {
+                ($this->layersConfigurator)($layers);
+            }
+
+            return $this->renderer = new MapRenderer($layers->build());
+        }
     }
 
     public readonly MapLoader $loader;
@@ -100,6 +113,13 @@ final class DofusMapParser
          * Cache implementation to use for sprites.
          */
         private readonly SpriteCacheInterface $spriteCache = new InMemorySpriteCache(100),
+
+        /**
+         * Custom configuration for renderer layers.
+         *
+         * @var Closure(LayerRendersBuilder):void|null
+         */
+        private readonly ?Closure $layersConfigurator = null,
 
         /**
          * List of attachments providers to add to the map.

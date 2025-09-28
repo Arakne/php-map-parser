@@ -7,6 +7,7 @@ use Arakne\MapParser\Loader\MapKey;
 use Arakne\MapParser\Loader\MapLoader;
 use Arakne\MapParser\Loader\MapStructure;
 use Arakne\MapParser\Renderer\CellShape;
+use Arakne\MapParser\Renderer\Layer\LayerRendersBuilder;
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Sprite\Cache\SqliteSpriteCache;
 use Arakne\MapParser\Tile\Cache\SqliteCache;
@@ -65,6 +66,9 @@ $dmp = new DofusMapParser(
     },
     tileCache: new SqliteCache($cacheDir . '/tiles.db'),
     spriteCache: new SqliteSpriteCache($cacheDir . '/sprites.db'),
+    layersConfigurator: function (LayerRendersBuilder $builder) {
+        $builder->enableGrid();
+    },
     attachmentsProviders: [
         function (MapStructure $map) {
             if ($map->attachments) {

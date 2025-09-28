@@ -3,10 +3,8 @@
 namespace Arakne\MapParser\Renderer;
 
 use Arakne\MapParser\Loader\Map;
-use Arakne\MapParser\Renderer\Layer\BackgroundLayerRenderer;
-use Arakne\MapParser\Renderer\Layer\LayerObjectRenderer;
 use Arakne\MapParser\Renderer\Layer\LayerRendererInterface;
-use Arakne\MapParser\Sprite\SpriteRepositoryInterface;
+use Arakne\MapParser\Renderer\Layer\LayerRendersBuilder;
 use GdImage;
 use Override;
 
@@ -15,7 +13,25 @@ use function imagecreatetruecolor;
 /**
  * Base dofus map renderer
  *
- * @psalm-api
+ * Usage:
+ * ```php
+ * $loader = new MapLoader();
+ * $renderer = new MapRenderer(
+ *     new LayerRendersBuilder(
+ *        new SwfSpriteRepository(glob('path/to/clips/gfx/g*.swf')),
+ *        new SwfSpriteRepository(glob('path/to/clips/gfx/o*.swf')),
+ *     )->build()
+ * );
+ *
+ * $map = $loader->load(
+ *     MapStructure::fromSwfFile(new SwfFile('path/to/mapX.swf')),
+ *     new MapKey(getMapKey()),
+ * );
+ *
+ * $img = $renderer->render($map);
+ * header('Content-Type: image/png');
+ * imagepng($img);
+ * ```
  */
 final readonly class MapRenderer implements MapRendererInterface
 {
@@ -47,8 +63,13 @@ final readonly class MapRenderer implements MapRendererInterface
     public const int DEFAULT_HEIGHT = 17;
 
     public function __construct(
-        private SpriteRepositoryInterface $grounds,
-        private SpriteRepositoryInterface $objects,
+        /**
+         * The list of layer renderers to apply, in order
+         *
+         * @var list<LayerRendererInterface>
+         * @see LayerRendersBuilder for a builder to create common layers
+         */
+        private array $layers,
     ) {}
 
     #[Override]
@@ -67,16 +88,7 @@ final readonly class MapRenderer implements MapRendererInterface
 
         $shapes = CellShape::fromMap($map);
 
-        // @todo inject layers
-        /** @var LayerRendererInterface[] $layers */
-        $layers = [
-            new BackgroundLayerRenderer($this->grounds),
-            new LayerObjectRenderer($this->grounds, static fn(CellShape $cell) => $cell->data->ground),
-            new LayerObjectRenderer($this->objects, static fn(CellShape $cell) => $cell->data->layer1),
-            new LayerObjectRenderer($this->objects, static fn(CellShape $cell) => $cell->data->layer2),
-        ];
-
-        foreach ($layers as $layer) {
+        foreach ($this->layers as $layer) {
             $layer->render($map, $shapes, $img);
         }
 

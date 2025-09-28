@@ -4,6 +4,7 @@ namespace WorldMap;
 
 use Arakne\MapParser\Loader\MapKey;
 use Arakne\MapParser\Loader\MapStructure;
+use Arakne\MapParser\Renderer\Layer\LayerRendersBuilder;
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Sprite\SwfSpriteRepository;
 use Arakne\MapParser\Test\AssertImageTrait;
@@ -66,8 +67,10 @@ class CombinedWorldMapTileRendererTest extends TestCase
         $this->renderer = new CombinedWorldMapTileRenderer(
             new SwfWorldMap(new SwfFile(__DIR__ . '/Fixtures/3.swf')),
             new MapRenderer(
-                new SwfSpriteRepository(glob(__DIR__ . '/../_files/clips/gfx/g*.swf')),
-                new SwfSpriteRepository(glob(__DIR__ . '/../_files/clips/gfx/o*.swf')),
+                new LayerRendersBuilder(
+                    new SwfSpriteRepository(glob(__DIR__ . '/../_files/clips/gfx/g*.swf')),
+                    new SwfSpriteRepository(glob(__DIR__ . '/../_files/clips/gfx/o*.swf')),
+                )->build()
             ),
             function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {

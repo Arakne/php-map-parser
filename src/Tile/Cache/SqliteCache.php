@@ -16,6 +16,8 @@ use function mkdir;
 
 /**
  * A tile cache using a SQLite database for storage.
+ *
+ * @todo rename to SqliteTileCache
  */
 final readonly class SqliteCache implements TileCacheInterface
 {

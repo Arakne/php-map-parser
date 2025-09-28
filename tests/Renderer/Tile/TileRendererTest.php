@@ -4,6 +4,7 @@ namespace Renderer\Tile;
 
 use Arakne\MapParser\Loader\MapKey;
 use Arakne\MapParser\Loader\MapStructure;
+use Arakne\MapParser\Renderer\Layer\LayerRendersBuilder;
 use Arakne\MapParser\Renderer\MapRenderer;
 use Arakne\MapParser\Renderer\MapRendererInterface;
 use Arakne\MapParser\Renderer\TileRenderer;
@@ -196,8 +197,10 @@ class TileRendererTest extends TestCase
     {
         $renderer = new TileRenderer(
             new MapRenderer(
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                new LayerRendersBuilder(
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                )->build()
             ),
             function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
@@ -232,8 +235,10 @@ class TileRendererTest extends TestCase
     {
         $renderer = new TileRenderer(
             new MapRenderer(
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                new LayerRendersBuilder(
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                )->build()
             ),
             function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
@@ -270,8 +275,10 @@ class TileRendererTest extends TestCase
     {
         $renderer = new TileRenderer(
             new MapRenderer(
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                new LayerRendersBuilder(
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                )->build()
             ),
             function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
@@ -303,8 +310,10 @@ class TileRendererTest extends TestCase
     public function render_with_scale()
     {
         $mapRenderer = new MapRenderer(
-            new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
-            new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+            new LayerRendersBuilder(
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+            )->build()
         );
 
         foreach ([1.1, 1.3, 1.5] as $scale) {
@@ -344,8 +353,10 @@ class TileRendererTest extends TestCase
     {
         $renderer = new TileRenderer(
             new MapRenderer(
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                new LayerRendersBuilder(
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                )->build()
             ),
             function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
@@ -394,8 +405,10 @@ class TileRendererTest extends TestCase
     {
         $renderer = new TileRenderer(
             new MapRenderer(
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                new LayerRendersBuilder(
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                )->build()
             ),
             function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
@@ -432,8 +445,10 @@ class TileRendererTest extends TestCase
     {
         $renderer = new TileRenderer(
             new MapRenderer(
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                new LayerRendersBuilder(
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                )->build()
             ),
             function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
@@ -517,8 +532,10 @@ class TileRendererTest extends TestCase
     {
         $renderer = new TileRenderer(
             new MapRenderer(
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                new LayerRendersBuilder(
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                )->build()
             ),
             function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
@@ -591,8 +608,10 @@ class TileRendererTest extends TestCase
     {
         $renderer = new TileRenderer(
             new MapRenderer(
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
-                new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                new LayerRendersBuilder(
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/g*.swf')),
+                    new SwfSpriteRepository(glob(__DIR__ . '/../../_files/clips/gfx/o*.swf')),
+                )->build()
             ),
             function (TileMapCoordinates $coords) {
                 if (!($mapId = self::MAPS["{$coords->x},{$coords->y}"] ?? null)) {
