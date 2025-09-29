@@ -74,6 +74,7 @@ final class Application
                 echo sprintf("[Amakna] Building %s (%d/%d)\n", $name, $current, $total);
             },
         );
+
         echo "Warming up Incarnam...\n";
         $this->incarnam->warmup(
             function (string $name, int $current, int $total) {

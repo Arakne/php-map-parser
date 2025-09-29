@@ -13,8 +13,7 @@
         "php": "~8.4",
         "ext-imagick": "*",
         "ext-gd": "*",
-        "arakne/swf": "^0.2.2",
-        "workerman/workerman": "~5.1"
+        "arakne/swf": "^0.2.2"
     },
     "require-dev": {
         "phpunit/phpunit": "~12.0",

@@ -18,8 +18,8 @@ if (($argv[1] ?? null) === 'warmup') {
     exit(0);
 }
 
-$worker = new \Workerman\Worker('http://0.0.0.0:80');
-$worker->count = 16;
+$worker = new \Workerman\Worker('http://0.0.0.0:' . (getenv('LISTEN_PORT') ?: '80'));
+$worker->count = (int) (getenv('WORKER_COUNT') ?: 4);
 
 $worker->onMessage = function (TcpConnection $connection, Request $request) use ($app) {
     $app->run($request->path(), $request->get(), function (string $data, array $headers = []) use ($connection) {

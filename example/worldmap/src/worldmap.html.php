@@ -56,7 +56,7 @@ use Arakne\MapParser\WorldMap\WorldMapTileRenderer;
         wheelPxPerZoomLevel: 120,
     }).setView([70, -40], 4);
 
-    L.tileLayer('http://127.0.0.1:5000/tiles/<?= $this->name ?>?x={x}&y={y}&z={z}', {
+    L.tileLayer('/tiles/<?= $this->name ?>?x={x}&y={y}&z={z}', {
         maxZoom: <?= $this->tileRenderer->maxZoom + 1 ?>,
     }).addTo(mymap);
 
