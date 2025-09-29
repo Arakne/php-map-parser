@@ -47,11 +47,31 @@ final readonly class LatLongBounds
             return null;
         }
 
+        $west = (float) $parts[0];
+        $south = (float) $parts[1];
+        $east = (float) $parts[2];
+        $north = (float) $parts[3];
+
+        if (
+            $west < -180
+            || $west > 180
+            || $east < -180
+            || $east > 180
+            || $south < -90
+            || $south > 90
+            || $north < -90
+            || $north > 90
+            || $south > $north
+            || $west > $east
+        ) {
+            return null;
+        }
+
         return new self(
-            west: (float) $parts[0],
-            south: (float) $parts[1],
-            east: (float) $parts[2],
-            north: (float) $parts[3],
+            west: $west,
+            south: $south,
+            east: $east,
+            north: $north,
         );
     }
 }

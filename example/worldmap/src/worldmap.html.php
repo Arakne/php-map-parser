@@ -54,10 +54,16 @@ use Arakne\MapParser\WorldMap\WorldMapTileRenderer;
         zoomSnap: 1,
         zoomDelta: 1,
         wheelPxPerZoomLevel: 120,
+        maxBounds: [
+            [-90, -180], // coin sud-ouest
+            [90, 180]    // coin nord-est
+        ],
+        worldCopyJump: false,
     }).setView([70, -40], 4);
 
     L.tileLayer('/tiles/<?= $this->name ?>?x={x}&y={y}&z={z}', {
         maxZoom: <?= $this->tileRenderer->maxZoom + 1 ?>,
+        noWrap: true,
     }).addTo(mymap);
 
     const tpLayer = L.layerGroup().addTo(mymap);

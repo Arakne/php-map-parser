@@ -8,6 +8,7 @@ use Arakne\MapParser\Tile\TileRendererInterface;
 use Closure;
 
 use function array_keys;
+use function json_encode;
 
 final readonly class LoadMarkersController
 {
