@@ -55,7 +55,7 @@ class MapRenderTest extends TestCase
         $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
         $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
 
-        $this->assertImages(__DIR__.'/_files/10340.png', __DIR__ . '/_files/37.png');
+        $this->assertImages(__DIR__.'/_files/10340.png', __DIR__ . '/_files/render.png');
         unlink(__DIR__ . '/_files/render.png');
     }
 
@@ -129,7 +129,7 @@ class MapRenderTest extends TestCase
         $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
         $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
 
-        $this->assertImages(__DIR__.'/_files/37.png', __DIR__ . '/_files/render.png', 0.002);
+        $this->assertImages([__DIR__.'/_files/37.png', __DIR__.'/_files/37-old-gd.png'], __DIR__ . '/_files/render.png', 0.002);
         unlink(__DIR__ . '/_files/render.png');
     }
 
@@ -145,7 +145,7 @@ class MapRenderTest extends TestCase
         $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
         $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
 
-        $this->assertImages(__DIR__.'/_files/300.png', __DIR__ . '/_files/render.png', 0.002);
+        $this->assertImages([__DIR__.'/_files/300.png', __DIR__.'/_files/300-old-gd.png'], __DIR__ . '/_files/render.png', 0.002);
         unlink(__DIR__ . '/_files/render.png');
 
     }
