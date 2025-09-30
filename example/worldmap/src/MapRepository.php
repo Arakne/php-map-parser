@@ -27,8 +27,9 @@ final class MapRepository
         $query = <<<'SQL'
             SELECT * FROM maps 
             WHERE MAP_X = ? AND MAP_Y = ?
-            AND INDOOR = 0
             AND SUBAREA_ID IN (SELECT SUBAREA_ID FROM SUBAREA WHERE AREA_ID IN (SELECT AREA_ID FROM AREA WHERE SUPERAREA_ID = ?))
+            ORDER BY INDOOR ASC
+            LIMIT 1
             SQL
         ;
 
@@ -79,7 +80,7 @@ final class MapRepository
 
     /**
      * @param Bounds $bounds
-     * @return array<int, MapStructure>
+     * @return MapStructure[]
      */
     function findMapsInBounds(Bounds $bounds, int $superAreaId): array
     {
@@ -87,8 +88,8 @@ final class MapRepository
             SELECT * FROM maps 
             WHERE MAP_X BETWEEN ? AND ?
             AND MAP_Y BETWEEN ? AND ?
-            AND INDOOR = 0
             AND SUBAREA_ID IN (SELECT SUBAREA_ID FROM SUBAREA WHERE AREA_ID IN (SELECT AREA_ID FROM AREA WHERE SUPERAREA_ID = ?))
+            ORDER BY INDOOR ASC
             SQL
         ;
 
@@ -105,9 +106,10 @@ final class MapRepository
 
         foreach ($maps as $map) {
             $mapFile = $this->config->mapsPath . '/' . $map['id'] . '_' . $map['date'] . ($map['key'] ? 'X' : '') . '.swf';
+            $pos = $map['MAP_X'] . ',' . $map['MAP_Y'];
 
-            if (is_file($mapFile)) {
-                $loaded[] = MapStructure::fromSwfFile(
+            if (!isset($loaded[$pos]) && is_file($mapFile)) {
+                $loaded[$pos] = MapStructure::fromSwfFile(
                     new SwfFile($mapFile),
                     new MapCoordinates($map['MAP_X'], $map['MAP_Y']),
                     new MapKey($map['key']),

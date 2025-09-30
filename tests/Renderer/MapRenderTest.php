@@ -105,13 +105,13 @@ class MapRenderTest extends TestCase
 
         $img = $this->renderer->render($map);
 
-        imagepng($img, __DIR__ . '/_files/37.png');
+        imagepng($img, __DIR__ . '/_files/render.png');
 
         $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
         $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
 
-        $this->assertImages(__DIR__.'/_files/703.png', __DIR__ . '/_files/37.png', 0.002);
-        unlink(__DIR__ . '/_files/37.png');
+        $this->assertImages(__DIR__.'/_files/703.png', __DIR__ . '/_files/render.png', 0.002);
+        unlink(__DIR__ . '/_files/render.png');
     }
 
     #[Test]
@@ -124,12 +124,29 @@ class MapRenderTest extends TestCase
 
         $img = $this->renderer->render($map);
 
-        imagepng($img, __DIR__ . '/_files/37.png');
+        imagepng($img, __DIR__ . '/_files/render.png');
 
         $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
         $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
 
-        $this->assertImages(__DIR__.'/_files/37.png', __DIR__ . '/_files/37.png', 0.002);
-        unlink(__DIR__ . '/_files/37.png');
+        $this->assertImages(__DIR__.'/_files/37.png', __DIR__ . '/_files/render.png', 0.002);
+        unlink(__DIR__ . '/_files/render.png');
+    }
+
+    #[Test]
+    public function renderShouldDisableSubpixelStroke()
+    {
+        $map = new MapLoader()->load(MapStructure::fromSwfFile(new SwfFile(__DIR__ .'/../_files/300_0702021040.swf')));
+
+        $img = $this->renderer->render($map);
+
+        imagepng($img, __DIR__ . '/_files/render.png');
+
+        $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
+        $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
+
+        $this->assertImages(__DIR__.'/_files/300.png', __DIR__ . '/_files/render.png', 0.002);
+        unlink(__DIR__ . '/_files/render.png');
+
     }
 }

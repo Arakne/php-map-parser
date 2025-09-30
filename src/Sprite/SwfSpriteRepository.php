@@ -57,6 +57,7 @@ final class SwfSpriteRepository implements SpriteRepositoryInterface
          */
         private readonly array $files,
         private readonly SpriteCacheInterface $cache = new InMemorySpriteCache(10),
+        private readonly Converter $converter = new Converter(subpixelStrokeWidth: false),
     ) {}
 
     #[Override]
@@ -79,7 +80,6 @@ final class SwfSpriteRepository implements SpriteRepositoryInterface
             }
 
             $bounds = $sprite->bounds();
-            $converter = new Converter();
 
             $width = ($bounds->width() / 20);
             $height = ($bounds->height() / 20);
@@ -91,7 +91,7 @@ final class SwfSpriteRepository implements SpriteRepositoryInterface
 
             return new Sprite(
                 id: $id,
-                pngData: $converter->toPng($sprite),
+                pngData: $this->converter->toPng($sprite),
                 width: $width,
                 height: $height,
                 offsetX: ($bounds->xmin / 20),
