@@ -50,13 +50,13 @@ class MapRenderTest extends TestCase
         $map = new Map(0, 15, 17, 0, (new CellDataParser())->parse(file_get_contents(__DIR__.'/../_files/10340.data')));
         $img = $this->renderer->render($map);
 
-        imagepng($img, __DIR__ . '/_files/37.png');
+        imagepng($img, __DIR__ . '/_files/render.png');
 
         $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
         $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
 
         $this->assertImages(__DIR__.'/_files/10340.png', __DIR__ . '/_files/37.png');
-        unlink(__DIR__ . '/_files/37.png');
+        unlink(__DIR__ . '/_files/render.png');
     }
 
     #[Test]
@@ -67,13 +67,13 @@ class MapRenderTest extends TestCase
         ));
         $img = $this->renderer->render($map);
 
-        imagepng($img, __DIR__ . '/_files/37.png');
+        imagepng($img, __DIR__ . '/_files/render.png');
 
         $this->assertEquals(MapRenderer::DISPLAY_HEIGHT, imagesy($img));
         $this->assertEquals(MapRenderer::DISPLAY_WIDTH, imagesx($img));
 
-        $this->assertImages(__DIR__.'/_files/10302.png', __DIR__ . '/_files/37.png');
-        unlink(__DIR__ . '/_files/37.png');
+        $this->assertImages(__DIR__.'/_files/10302.png', __DIR__ . '/_files/render.png');
+        unlink(__DIR__ . '/_files/render.png');
     }
 
     #[Test]
